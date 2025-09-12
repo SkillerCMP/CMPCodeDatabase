@@ -28,11 +28,5 @@ Key fields:
 - `DatabaseDownloadUrl` (default: your Drive folder)
 - `ToolsDownloadUrl` (default: Apollo CLI tools releases)
 
-## GitHub Desktop (quick start)
-1. **File → New repository** in GitHub Desktop, choose this folder.
-2. Review added files, commit: `chore: initial import`.
-3. **Publish repository** to GitHub.
-4. (Optional) Add a release with packaged binaries.
-
 ## License
 GPL-3.0. See `LICENSE`.
