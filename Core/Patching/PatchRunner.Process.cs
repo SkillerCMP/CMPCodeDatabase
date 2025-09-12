@@ -1,0 +1,13 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// CMPCodeDatabase — File: Core/Patching/PatchRunner.Process.cs
+// Purpose: Patching and process/runner logic.
+// Notes:
+//  • Documentation-only header added (no behavioral changes).
+//  • Keep UI hooks intact: EnsureDownloadButtons(), EnsureStartupChecks(), EnsureCloudMenu().
+//  • Database root resolution is centralized (ResolveDatabasesRoot / helpers).
+//  • Startup creates: Files\, Files\Database\, Files\Tools\ (if missing).
+//  • 'ReloadDB' clears trees and calls LoadDatabaseSelector().
+// Added: 2025-09-12
+// ─────────────────────────────────────────────────────────────────────────────
+
+using System; using System.Diagnostics; using System.Threading; using System.Threading.Tasks; using System.Windows.Forms; namespace CMPCodeDatabase.Patching { public sealed class PatchRunnerProcess : IPatchRunner { string _tool; public PatchRunnerProcess(string t){_tool=t??throw new ArgumentNullException(nameof(t));} public Task RunAsync(string p,int c,IWin32Window o)=>RunAsync(p,c,o,null,default); public async Task RunAsync(string p,int c,IWin32Window o, IPatchLogSink l, CancellationToken ct=default){ var psi=new ProcessStartInfo{FileName=_tool,Arguments=$"--patch \"{p}\"",UseShellExecute=false,RedirectStandardOutput=true,RedirectStandardError=true,CreateNoWindow=true}; l?.WriteLine($"[cmd]  {_tool} {psi.Arguments}"); l?.WriteLine($"[patch] {p}"); l?.WriteLine($"[count] {c}"); using var proc=new Process{StartInfo=psi,EnableRaisingEvents=true}; var tcs=new TaskCompletionSource<int>(); proc.OutputDataReceived+=(s,e)=>{if(e.Data!=null) l?.WriteLine("[out] "+e.Data);}; proc.ErrorDataReceived+=(s,e)=>{if(e.Data!=null) l?.WriteLine("[err] "+e.Data);}; proc.Exited+=(s,e)=>tcs.TrySetResult(proc.ExitCode); try{ if(!proc.Start()) throw new InvalidOperationException("Failed to start patch process."); proc.BeginOutputReadLine(); proc.BeginErrorReadLine(); using(ct.Register(()=>{try{if(!proc.HasExited) proc.Kill(true);}catch (System.Exception ex) { System.Diagnostics.Debug.WriteLine(ex); }})){ var code=await tcs.Task.ConfigureAwait(true); l?.WriteLine($"[exit] {code}"); if(code!=0) MessageBox.Show(o,$"Patch tool exited with code {code}.","Patch failed",MessageBoxButtons.OK,MessageBoxIcon.Warning);} } catch(Exception ex){ l?.WriteLine("[exception] "+ex); MessageBox.Show(o,$"Could not launch patch tool:\n{ex.Message}","Error",MessageBoxButtons.OK,MessageBoxIcon.Error);} } } }

@@ -1,0 +1,36 @@
+## Visual Studio / .NET
+.vs/
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.dbmdl
+*.pdb
+*.opendb
+*.cache
+*.ide
+*.ncrunchsolution
+TestResult*/
+TestResults/
+*.nupkg
+packages/
+
+## Rider / VS Code
+.idea/
+.vscode/
+
+## Build outputs
+**/Release/
+**/Debug/
+
+## App local data
+Files/Database/**
+Files/Tools/**
+Files/Logs/**
+!Files/.keep
+
+## OS
+.DS_Store
+Thumbs.db
