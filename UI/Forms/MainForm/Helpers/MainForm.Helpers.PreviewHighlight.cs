@@ -1,40 +1,70 @@
+
 // ─────────────────────────────────────────────────────────────────────────────
 // CMPCodeDatabase — File: UI/Forms/MainForm/Helpers/MainForm.Helpers.PreviewHighlight.cs
-// Purpose: UI composition, menus, and layout for the MainForm.
-// Notes:
-//  • Documentation-only header added (no behavioral changes).
-//  • Keep UI hooks intact: EnsureDownloadButtons(), EnsureStartupChecks(), EnsureCloudMenu().
-//  • Database root resolution is centralized (ResolveDatabasesRoot / helpers).
-//  • Startup creates: Files\, Files\Database\, Files\Tools\ (if missing).
-//  • 'ReloadDB' clears trees and calls LoadDatabaseSelector().
-// Added: 2025-09-12
+// Purpose: Code Preview helpers: keep preview text in sync and highlight current MOD token.
 // ─────────────────────────────────────────────────────────────────────────────
 
 using System;
-using System.Linq;
 using System.Windows.Forms;
 
 namespace CMPCodeDatabase
 {
     public partial class MainForm : Form
     {
-        private (int start, int length)? _lastModHighlight;
+        /// <summary>
+        /// Update the preview text safely (no selection flicker).
+        /// </summary>
+        private void UpdateCodePreview(string text)
+        {
+            if (txtCodePreview == null) return;
+            try
+            {
+                txtCodePreview.SuspendLayout();
+                txtCodePreview.Text = text ?? string.Empty;
+                txtCodePreview.SelectionStart = txtCodePreview.TextLength;
+                txtCodePreview.SelectionLength = 0;
+            }
+            finally
+            {
+                txtCodePreview.ResumeLayout();
+            }
+        }
 
+        /// <summary>
+        /// Highlight a range (start, length) in the preview. Scrolls caret into view.
+        /// Pass a negative length or out-of-bounds start to clear the highlight.
+        /// </summary>
         private void HighlightModRange(int start, int length)
         {
             if (txtCodePreview == null) return;
-            if (start < 0 || length <= 0 || start + length > (txtCodePreview.Text?.Length ?? 0)) return;
+
+            // Clear when invalid
+            if (start < 0 || length <= 0 || start >= txtCodePreview.TextLength)
+            {
+                ClearModHighlight();
+                return;
+            }
+
+            int maxLen = txtCodePreview.TextLength - start;
+            int len = Math.Min(length, Math.Max(0, maxLen));
+
             try
             {
-                txtCodePreview.HideSelection = false;
-                txtCodePreview.Select(start, length);
+                txtCodePreview.SuspendLayout();
+                _lastModHighlight = (start, len);
+                txtCodePreview.Select(start, len);
                 txtCodePreview.ScrollToCaret();
-                _lastModHighlight = (start, length);
             }
-            catch { }
+            finally
+            {
+                txtCodePreview.ResumeLayout();
+            }
         }
 
-        private void ClearPreviewHighlight()
+        /// <summary>
+        /// Clear the temporary highlight and collapse selection to after the last range.
+        /// </summary>
+        private void ClearModHighlight()
         {
             if (txtCodePreview == null) return;
             if (_lastModHighlight.HasValue)
@@ -42,9 +72,11 @@ namespace CMPCodeDatabase
                 try
                 {
                     int pos = _lastModHighlight.Value.start + _lastModHighlight.Value.length;
-                    txtCodePreview.Select(Math.Min(pos, txtCodePreview.Text.Length), 0);
+                    if (pos < 0) pos = 0;
+                    if (pos > txtCodePreview.TextLength) pos = txtCodePreview.TextLength;
+                    txtCodePreview.Select(pos, 0);
                 }
-                catch { }
+                catch { /* ignore */ }
                 _lastModHighlight = null;
             }
         }

@@ -17,7 +17,7 @@ namespace CMPCodeDatabase
     {
         private void InitializeComponent()
                 {
-                    Text = "CMP CodeDatabase 1.01";
+                    Text = CMPCodeDatabase.Util.VersionUtil.BuildWindowTitle();
                     StartPosition = FormStartPosition.CenterScreen;
 
                     // MenuStrip

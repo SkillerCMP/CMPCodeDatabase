@@ -22,7 +22,7 @@ namespace CMPCodeDatabase
                     codesContextMenu.Items.Add("Select MOD", null, (s, e) => SelectMod(treeCodes.SelectedNode!));
                     codesContextMenu.Items.Add("Copy to Clipboard", null, (s, e) => CopyCode(treeCodes.SelectedNode!));
                     codesContextMenu.Items.Add("Copy to Collector", null, (s, e) => AddCodeToCollector(treeCodes.SelectedNode!));
-                    codesContextMenu.Items.Add("Show Note", null, (s, e) => ShowNoteForNode(treeCodes.SelectedNode!));
+                    codesContextMenu.Items.Add("Show Note", null, (s, e) => ShowNoteOrPopupForNode(treeCodes.SelectedNode!));
                     codesContextMenu.Opening += CodesContextMenu_Opening;
                     treeCodes.ContextMenuStrip = codesContextMenu;
                 }
@@ -36,7 +36,7 @@ namespace CMPCodeDatabase
                     if (codesContextMenu.Items.Count >= 5)
                     {
                         codesContextMenu.Items[1].Visible = modsAvailableForNode; // Select MOD only when node itself has mod
-                        codesContextMenu.Items[4].Visible = notesAvailableForNode; // Show Note only when node has note
+                        codesContextMenu.Items[4].Visible = notesAvailableForNode || (treeCodes.SelectedNode != null && nodePopupNotes.ContainsKey(treeCodes.SelectedNode)); // Show Note only when node has note
                     }
                 }
 

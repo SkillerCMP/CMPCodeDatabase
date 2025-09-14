@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Windows.Forms;
 // ─────────────────────────────────────────────────────────────────────────────
 // CMPCodeDatabase — File: UI/Forms/MainForm/MainForm.cs
 // Purpose: UI composition, menus, and layout for the MainForm.
@@ -47,6 +51,13 @@ namespace CMPCodeDatabase
                 private readonly Dictionary<TreeNode, string> originalCodeTemplates = new();
                 private readonly Dictionary<TreeNode, string> originalNodeNames = new();
                 private readonly Dictionary<TreeNode, string> nodeNotes = new();
+
+                // Popup notes per node (double-brace {{...}}) and session suppression
+                private readonly Dictionary<TreeNode, List<string>> nodePopupNotes = new();
+                private readonly HashSet<string> suppressedPopupNotes = new();
+
+        // Last highlighted MOD range in the preview (start, length)
+        private (int start, int length)? _lastModHighlight = null;
                 private readonly HashSet<TreeNode> nodeHasMod = new();
                 private readonly Dictionary<TreeNode, string> appliedModNames = new();
 
@@ -110,23 +121,29 @@ namespace CMPCodeDatabase
                 private Label lblStatus = new Label() { Dock = DockStyle.Top, AutoSize = true, Padding = new Padding(4) };
                 private Label lblPreview = new Label() { Dock = DockStyle.Top, AutoSize = true, Padding = new Padding(4) };
                 private Label lblMeta = new Label() { Dock = DockStyle.Top, AutoSize = true, Padding = new Padding(4) };
+                private Label lblBoxName;
                 private Button btnDefault = new Button() { Text = "Use Default", Dock = DockStyle.Bottom };
                 private Button btnOK = new Button() { Text = "OK", Dock = DockStyle.Bottom };
                 private Button btnCancel = new Button() { Text = "Cancel", Dock = DockStyle.Bottom };
 
                 public string? ResultHex { get; private set; } // uppercase hex, exact byteSize*2 length
+                public string? SelectedHex => ResultHex;
+
 
                 private string _lastValidInput = "0";      // for auto-revert on overflow
                 private bool _internalChange = false;      // guard to prevent recursion during revert
 
-                public SpecialAmountDialog(string title, string defHex, string type, string endian)
+                public SpecialAmountDialog(string title, string defaultHex, string type, string endian, string boxLabel = null)
                 {
                     this.type = (type ?? "HEX").Trim().ToUpperInvariant();
                     this.endian = (endian ?? "BIG").Trim().ToUpperInvariant();
-                    this.defaultRawHex = System.Text.RegularExpressions.Regex.Replace(defHex ?? "", "[^0-9A-Fa-f]", "").ToUpperInvariant();
+                    this.defaultRawHex = System.Text.RegularExpressions.Regex.Replace(defaultHex ?? "", "[^0-9A-Fa-f]", "").ToUpperInvariant();
                     this.byteSize = Math.Max(1, defaultRawHex.Length / 2);
 
-                    Text = string.IsNullOrWhiteSpace(title) ? "Amount" : title;
+                    var label = (boxLabel ?? string.Empty).Trim('<','>',' '); // safety: remove <>
+var caption = string.IsNullOrWhiteSpace(title) ? "Amount" : title;
+if (!string.IsNullOrWhiteSpace(label)) caption += " " + label;
+Text = caption;
                     Width = 520; Height = 260; StartPosition = FormStartPosition.CenterParent;
 
                     var panel = new Panel() { Dock = DockStyle.Fill, Padding = new Padding(8) };
@@ -1021,5 +1038,46 @@ namespace CMPCodeDatabase
 
             appliedModNames[node] = string.Join(", ", map.Values);
         }
-    }
+
+        // --- Note UI helpers (popup-aware) ---
+        private bool HasPopupNote(TreeNode node) =>
+            node != null && nodePopupNotes.TryGetValue(node, out var list) && list != null && list.Count > 0;
+
+        private void ShowNoteOrPopupForNode(TreeNode node)
+        {
+            if (node == null) return;
+            if (HasPopupNote(node))
+            {
+                // Show the popup dialog (non-gating here)
+                string html = string.Join("<hr/>", nodePopupNotes[node].Select(UnescapeNote));
+                using (var dlg = new NotePopupDialog(GetCopyName(node), html))
+                {
+                    dlg.ShowDialog(this);
+                }
+                return;
+            }
+            ShowNoteForNode(node);
+        }
+
+        // Gate actions (Select MOD / Add to Collector). Return true if user chooses Continue.
+        private bool GateOnAction(TreeNode node)
+        {
+            if (node == null) return true;
+            // If suppressed for the session, allow through
+            string key = GetCopyName(node);
+            if (string.IsNullOrWhiteSpace(key)) key = node.Text ?? string.Empty;
+            if (suppressedPopupNotes.Contains(key)) return true;
+
+            if (!nodePopupNotes.TryGetValue(node, out var list) || list == null || list.Count == 0) return true;
+
+            string html = string.Join("<hr/>", list.Select(UnescapeNote));
+            using (var dlg = new NotePopupDialog(GetCopyName(node), html))
+            {
+                var result = dlg.ShowDialog(this);
+                if (dlg.Suppress) suppressedPopupNotes.Add(key);
+                return result == DialogResult.OK; // Continue => true; Don't Use => false
+            }
+        }
+
+}
 }

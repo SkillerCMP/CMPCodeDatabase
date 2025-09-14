@@ -118,6 +118,8 @@ namespace CMPCodeDatabase
                 {
                     foreach (var file in txtFiles)
             {
+                        bool __inModsSection = false;
+
                 TreeNode? currentFileGroup = null;
 TreeNode? currentGroup = null;
                         TreeNode? currentCodeNode = null;
@@ -129,7 +131,35 @@ TreeNode? currentGroup = null;
                         {
                             if (string.IsNullOrWhiteSpace(raw)) continue;
                             if (raw.StartsWith("^1") || raw.StartsWith("^2")) continue;
+                            
+                            // --- MODS guard: enter on exact '^6 = MODS:' and leave on any other caret header ---
+                            var __trim = (raw ?? string.Empty).Trim();
+                            if (__trim.StartsWith("^6 = MODS:", StringComparison.Ordinal)) __inModsSection = true;
+                            else if (__trim.StartsWith("^", StringComparison.Ordinal) && !__trim.StartsWith("^6 = MODS:", StringComparison.Ordinal)) __inModsSection = false;
+
                             string line = raw.TrimEnd();
+
+                            // --- Game Note: '{}' on its own line (outside MODS; and not a '+' code line) ---
+                            if (!__inModsSection)
+                            {
+                                var __head = line.TrimStart();
+                                if (__head.StartsWith("{", StringComparison.Ordinal) && __head.EndsWith("}", StringComparison.Ordinal) && !__head.StartsWith("+", StringComparison.Ordinal))
+                                {
+                                    string inner = __head.Substring(1, __head.Length - 2).Trim();
+                                    string html = UnescapeNote(inner);
+                                    TreeNode target = currentFileGroup ?? parentNode;
+                                    if (target != null)
+                                    {
+                                        if (nodeNotes.TryGetValue(target, out var ex) && !string.IsNullOrEmpty(ex))
+                                            nodeNotes[target] = ex + "<hr/>" + html;
+                                        else
+                                            nodeNotes[target] = html;
+                                        target.Text = GetDisplayName(target);
+                                    }
+                                    continue;
+                                }
+                            }
+
 
                             // Handle ^4 = FILE: <caption> as a top-level group within this game
                             var trimmed = line.Trim();
@@ -145,61 +175,76 @@ TreeNode? currentGroup = null;
                             }
 
 
+
                             if (line.StartsWith("+"))
                             {
                                 string rawName = line.Substring(1).Trim();
                                 string baseName = rawName;
-                                string? note = null;
+                                string note = null;
+                                string popup = null;
+                            
+                                // Extract double-brace popup first: +Title{{  }}
+                                int d1 = rawName.IndexOf("{{");
+                                int d2 = (d1 >= 0) ? rawName.IndexOf("}}", d1 + 2) : -1;
+                                if (d1 >= 0 && d2 > d1)
+                                {
+                                    popup = UnescapeNote(rawName.Substring(d1 + 2, d2 - d1 - 2).Trim());
+                                    rawName = (rawName.Substring(0, d1) + rawName.Substring(d2 + 2)).Trim();
+                                }
+                            
+                                // Now parse single-brace inline note: +Title{  }
                                 int s = rawName.IndexOf('{');
-                                int e = rawName.IndexOf('}');
+                                int e = (s >= 0) ? rawName.IndexOf('}', s + 1) : -1;
                                 if (s >= 0 && e > s)
                                 {
                                     note = UnescapeNote(rawName.Substring(s + 1, e - s - 1).Trim());
                                     baseName = rawName.Substring(0, s).Trim();
                                 }
-
+                                else
+                                {
+                                    baseName = rawName.Trim();
+                                }
+                            
                                 currentCodeNode = new TreeNode(baseName);
                                 (currentGroup ?? currentFileGroup ?? parentNode).Nodes.Add(currentCodeNode);
-
+                            
                                 originalCodeTemplates[currentCodeNode] = string.Empty;
                                 currentCodeNode.Tag = string.Empty;
                                 originalNodeNames[currentCodeNode] = baseName;
-
+                            
                                 if (!string.IsNullOrEmpty(note)) { nodeNotes[currentCodeNode] = note; currentCodeNode.Text = GetDisplayName(currentCodeNode); }
-                            }
-                            else if (line.StartsWith("$"))
-                            {
-                                if (currentCodeNode == null) continue;
-                                string codeLine = line.Substring(1).TrimEnd();
-                                string tpl = originalCodeTemplates[currentCodeNode];
-                                originalCodeTemplates[currentCodeNode] = string.IsNullOrEmpty(tpl) ? codeLine : tpl + Environment.NewLine + codeLine;
-
-                                string working = currentCodeNode.Tag as string ?? string.Empty;
-                                currentCodeNode.Tag = string.IsNullOrEmpty(working) ? codeLine : working + Environment.NewLine + codeLine;
-
-                                if (HasUnresolvedPlaceholders(originalCodeTemplates[currentCodeNode]))
+                                if (!string.IsNullOrEmpty(popup))
                                 {
-                                    nodeHasMod.Add(currentCodeNode);
+                                    if (!nodePopupNotes.ContainsKey(currentCodeNode)) nodePopupNotes[currentCodeNode] = new List<string>();
+                                    nodePopupNotes[currentCodeNode].Add(popup);
                                     currentCodeNode.Text = GetDisplayName(currentCodeNode);
                                 }
                             }
+
                             else if (line.StartsWith("!"))
                             {
                                 if (line.Trim() == "!!")
+                                {
                                     currentGroup = currentGroup?.Parent;
+                                }
                                 else
                                 {
                                     string rawGroup = line.Substring(1).Trim();
                                     string groupName = rawGroup;
                                     string? groupNote = null;
-                                    int gs = rawGroup.IndexOf('{');
-                                    int ge = rawGroup.IndexOf('}');
-                                    if (gs >= 0 && ge > gs)
+                            
+                                    // Only treat as group-note if pattern contains ':{' (per spec: !..:{})
+                                    if (rawGroup.IndexOf(":{", StringComparison.Ordinal) >= 0)
                                     {
-                                        groupNote = UnescapeNote(rawGroup.Substring(gs + 1, ge - gs - 1).Trim());
-                                        groupName = rawGroup.Substring(0, gs).Trim();
+                                        int gs = rawGroup.IndexOf('{');
+                                        int ge = rawGroup.IndexOf('}');
+                                        if (gs >= 0 && ge > gs)
+                                        {
+                                            groupNote = UnescapeNote(rawGroup.Substring(gs + 1, ge - gs - 1).Trim());
+                                            groupName = rawGroup.Substring(0, gs).Trim();
+                                        }
                                     }
-
+                            
                                     TreeNode newGroup = new TreeNode(groupName);
                                     (currentGroup ?? currentFileGroup ?? parentNode).Nodes.Add(newGroup);
                                     originalNodeNames[newGroup] = groupName;
@@ -224,7 +269,20 @@ TreeNode? currentGroup = null;
                                     headerCollected = false;
                                 }
                             }
-                            else if (currentModTag != null)
+                            
+                            else if (line.StartsWith("$"))
+                            {
+                                // Append raw code line to the current code node's template and keep original template in sync
+                                if (currentCodeNode != null)
+                                {
+                                    string existing = currentCodeNode.Tag?.ToString() ?? string.Empty;
+                                    if (!string.IsNullOrEmpty(existing)) existing += "\r\n";
+                                    currentCodeNode.Tag = existing + line;
+                                    originalCodeTemplates[currentCodeNode] = currentCodeNode.Tag.ToString();
+                                }
+                                continue;
+                            }
+else if (currentModTag != null)
                             {
                                 // Inside a MOD block
                                 if (!headerCollected)

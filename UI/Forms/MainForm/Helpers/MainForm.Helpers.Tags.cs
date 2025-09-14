@@ -15,7 +15,19 @@ namespace CMPCodeDatabase
 {
     public partial class MainForm : Form
     {
-        private int CountOccurrencesInText(string text, string token)
+// Returns the tag name without label in angle brackets, e.g., "Item<HP>" -> "Item"
+private static string TagCore(string tag)
+{
+    if (string.IsNullOrWhiteSpace(tag)) return string.Empty;
+    int lt = tag.IndexOf('<');
+    int gt = tag.LastIndexOf('>');
+    if (lt >= 0 && gt > lt) return tag.Remove(lt, gt - lt + 1).Trim();
+    return tag.Trim();
+}
+
+// Back-compat alias for older call sites that used lowercase method name
+private static string tagCore(string tag) => TagCore(tag);
+private int CountOccurrencesInText(string text, string token)
                         {
                             if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(token)) return 0;
                             int count = 0, start = 0;
@@ -37,7 +49,7 @@ namespace CMPCodeDatabase
                             int rsq = text.IndexOf(']', lsq + 1);
                             if (rsq < 0) return false;
                             string inside = text.Substring(lsq + 1, rsq - lsq - 1).Trim();
-                            return string.Equals(inside, tag, StringComparison.OrdinalIgnoreCase);
+                            return string.Equals(inside, tag, StringComparison.OrdinalIgnoreCase) || string.Equals(TagCore(inside), TagCore(tag), StringComparison.OrdinalIgnoreCase);
                         }
 
         private string ReplaceOneOccurrenceAtIndex(string tpl, int startIndexOfBracket, string newValue)
@@ -64,7 +76,7 @@ namespace CMPCodeDatabase
                                 int rsq = tpl.IndexOf(']', lsq + 1);
                                 if (rsq < 0) break;
                                 string inside = tpl.Substring(lsq + 1, rsq - lsq - 1).Trim();
-                                if (string.Equals(inside, tag, StringComparison.OrdinalIgnoreCase))
+                                if (string.Equals(inside, tag, StringComparison.OrdinalIgnoreCase) || string.Equals(TagCore(inside), TagCore(tag), StringComparison.OrdinalIgnoreCase))
                                     list.Add((lsq, rsq));
                                 i = rsq + 1;
                             }

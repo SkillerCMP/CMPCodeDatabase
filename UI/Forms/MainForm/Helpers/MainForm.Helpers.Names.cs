@@ -24,7 +24,7 @@ namespace CMPCodeDatabase
 
                     // Badges: -M- for MOD, -N- for Note, -NM- for both
                     bool hasM = nodeHasMod.Contains(node);
-                    bool hasN = nodeNotes.ContainsKey(node);
+                    bool hasN = nodeNotes.ContainsKey(node) || nodePopupNotes.ContainsKey(node);
                     string badge = hasM && hasN ? "-NM-" : hasM ? "-M-" : hasN ? "-N-" : string.Empty;
 
                     // Applied MOD name (e.g., "(HP: 123)")
