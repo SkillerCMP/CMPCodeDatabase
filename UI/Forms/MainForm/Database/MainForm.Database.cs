@@ -11,6 +11,12 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 
+using System;
+using System.IO;
+using System.Linq;
+using System.Collections.Generic;
+using System.Windows.Forms;
+
 namespace CMPCodeDatabase
 {
     public partial class MainForm : Form
@@ -271,17 +277,25 @@ TreeNode? currentGroup = null;
                             }
                             
                             else if (line.StartsWith("$"))
-                            {
-                                // Append raw code line to the current code node's template and keep original template in sync
-                                if (currentCodeNode != null)
-                                {
-                                    string existing = currentCodeNode.Tag?.ToString() ?? string.Empty;
-                                    if (!string.IsNullOrEmpty(existing)) existing += "\r\n";
-                                    currentCodeNode.Tag = existing + line;
-                                    originalCodeTemplates[currentCodeNode] = currentCodeNode.Tag.ToString();
-                                }
-                                continue;
-                            }
+{
+
+// v1.01 behavior: store code WITHOUT leading '$' so downstream SW formatter can reflow
+if (currentCodeNode == null) continue;
+
+string codeLine = line.Substring(1).TrimEnd();
+
+// Keep original template (used for placeholder gating) without '$'
+if (originalCodeTemplates.TryGetValue(currentCodeNode, out var tpl) && !string.IsNullOrEmpty(tpl))
+    originalCodeTemplates[currentCodeNode] = tpl + Environment.NewLine + codeLine;
+else
+    originalCodeTemplates[currentCodeNode] = codeLine;
+
+// Keep the working code on the node Tag without '$' (what Add→Collector uses)
+var working = currentCodeNode.Tag as string ?? string.Empty;
+currentCodeNode.Tag = string.IsNullOrEmpty(working)
+    ? codeLine
+    : working + Environment.NewLine + codeLine;
+}
 else if (currentModTag != null)
                             {
                                 // Inside a MOD block
@@ -356,7 +370,7 @@ else if (currentModTag != null)
 
                                 if (originalCodeTemplates.TryGetValue(t, out var codeTpl))
                                 {
-                                    bool should = ShouldShowModBadge(codeTpl, __available);
+                                    bool should = ShouldShowModBadgeNormalized(codeTpl, __available);
                                     if (should) nodeHasMod.Add(t); else nodeHasMod.Remove(t);
                                     t.Text = GetDisplayName(t);
                                 }

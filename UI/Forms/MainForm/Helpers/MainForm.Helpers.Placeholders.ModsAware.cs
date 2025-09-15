@@ -1,6 +1,11 @@
-// Drop-in replacement: ModsAware with single-arg overload that infers mod names from the code.
-// Self-contained (no external helper deps) and field-less (avoids CS0102).
-// Fixes CS7036 in Wrappers.cs by providing HasUnresolvedPlaceholders_ModsAware(string).
+// Drop-in: ModsAware v4 (angle-safe, declared-mod aware)
+// Purpose:
+// - Treat [NAME] and [NAME<...>] as the SAME placeholder (base NAME).
+// - When a set of declared mods is provided (from ^6 = MODS:), only those names count
+//   for "-M-" gating. [AMOUNT:...:...:...] remains always blocking.
+// - Ignore human-readable headers like "[Item Swap (...)]".
+//
+// This file is self-contained and uses no class fields.
 
 using System;
 using System.Collections.Generic;
@@ -10,103 +15,86 @@ namespace CMPCodeDatabase
 {
     public partial class MainForm
     {
-        /// <summary>
-        /// Normalize the base "name" of a placeholder by removing any &lt;...&gt; payloads and trimming.
-        /// Example: "Item&lt;Wanted&gt;" -> "Item"
-        /// </summary>
-        private static string NormalizePlaceholderBaseLocal(string? raw)
+        /// <summary>Strip any &lt;...&gt; payload and trim.</summary>
+        private static string PlaceholderBase(string? raw)
             => string.IsNullOrWhiteSpace(raw) ? string.Empty : Regex.Replace(raw, "<[^>]*>", string.Empty).Trim();
 
+        /// <summary>True for clean identifier (A-Za-z0-9_ only).</summary>
+        private static bool IsIdentifier(string s) => !string.IsNullOrEmpty(s) && Regex.IsMatch(s, @"^[A-Za-z0-9_]+$");
+
+        /// <summary>Tokens like "[Item Swap (...)]" are NOT placeholders.</summary>
+        private static bool LooksLikePlaceholder(string inside)
+        {
+            if (string.IsNullOrWhiteSpace(inside)) return false;
+            if (inside.IndexOf('<') >= 0 || inside.IndexOf(':') >= 0) return true; // [NAME<...>] or [NAME:...]
+            return IsIdentifier(inside.Trim()); // bare [NAME]
+        }
+
         /// <summary>
-        /// Infer available MOD names from the code text.
-        /// Priority:
-        ///  1) Curly blocks in a [MODS:] region, e.g. {MODNAME} ... {\MODNAME}
-        ///  2) Fallback: placeholder base names [Name...] (excluding Amount)
+        /// Angle-safe unresolved check using a DECLARED mod set. Base name only.
+        /// Examples that BLOCK:
+        ///   [Item], [Item<Thing>], [Size:...], [Amount:V:N:T]
+        /// Only counts when base name exists in 'declared' (except Amount).
         /// </summary>
-        private static ISet<string> InferModNamesFromCode(string? codeText)
+        private static bool HasUnresolvedPlaceholders_ModsAware(string? codeText, ISet<string> declared)
+        {
+            if (string.IsNullOrEmpty(codeText)) return false;
+            declared ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            var rx = new Regex(@"\[(?<inside>[^\]]+)\]");
+            foreach (Match m in rx.Matches(codeText))
+            {
+                var inside = (m.Groups["inside"]?.Value ?? string.Empty).Trim();
+                if (!LooksLikePlaceholder(inside)) continue;
+
+                // Amount is always blocking
+                var parts = inside.Split(':');
+                var first = parts.Length > 0 ? parts[0] : string.Empty;
+                if (parts.Length == 4 && string.Equals(PlaceholderBase(first), "Amount", StringComparison.OrdinalIgnoreCase))
+                    return true;
+
+                var baseName = PlaceholderBase(first);
+                if (!IsIdentifier(baseName)) continue;
+
+                // Only unresolved if declared set contains the base name
+                if (declared.Contains(baseName)) return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Legacy single-arg overload: try to infer mod names from {MOD} blocks, else block on any placeholder.
+        /// </summary>
+        private static bool HasUnresolvedPlaceholders_ModsAware(string? codeText)
+        {
+            var names = InferDeclaredModNames(codeText);
+            if (names.Count == 0) names.Add("__ANY__"); // sentinel
+            return HasUnresolvedPlaceholders_ModsAware(codeText, names.Contains("__ANY__") ? new HashSet<string>() : names);
+        }
+
+        /// <summary>Infer declared mod names from a MODS section: [Name] ... [/Name] or {NAME} ... {\NAME}.</summary>
+        private static ISet<string> InferDeclaredModNames(string? codeText)
         {
             var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             if (string.IsNullOrEmpty(codeText)) return names;
 
-            // Collect curly block names like {MOD} ... {\MOD}
-            var rxCurlyStart = new Regex(@"(?m)^\{(?<name>[A-Za-z0-9_]+)\}\s*$", RegexOptions.Compiled);
-            foreach (Match m in rxCurlyStart.Matches(codeText))
+            // [Name] ... [/Name]
+            var rxSquare = new Regex(@"\[(?<name>[A-Za-z0-9_]+)\]\s*(?:.|\n)*?\[\/\k<name>\]", RegexOptions.Compiled);
+            foreach (Match m in rxSquare.Matches(codeText))
             {
                 var n = m.Groups["name"]?.Value;
                 if (!string.IsNullOrWhiteSpace(n)) names.Add(n.Trim());
             }
 
-            // Fallback: collect base names from [Name], [Name<...>], [Name:...]
-            if (names.Count == 0)
+            // {NAME} ... {\NAME}
+            var rxCurly = new Regex(@"\{(?<name>[A-Za-z0-9_]+)\}(?:.|\n)*?\{\\\k<name>\}", RegexOptions.Compiled);
+            foreach (Match m in rxCurly.Matches(codeText))
             {
-                var rxPlaceholder = new Regex(@"\[(?<name>[^\[\]\:<]+)(?:<[^>\]]+>)?(?::[^\]]+)?\]", RegexOptions.Compiled);
-                foreach (Match p in rxPlaceholder.Matches(codeText))
-                {
-                    var baseName = NormalizePlaceholderBaseLocal(p.Groups["name"]?.Value);
-                    if (string.IsNullOrEmpty(baseName)) continue;
-                    if (string.Equals(baseName, "Amount", StringComparison.OrdinalIgnoreCase)) continue;
-                    names.Add(baseName);
-                }
+                var n = m.Groups["name"]?.Value;
+                if (!string.IsNullOrWhiteSpace(n)) names.Add(n.Trim());
             }
 
             return names;
-        }
-
-        /// <summary>
-        /// Return true if any line contains a blocking MOD placeholder.
-        /// Angle-bracket payloads are ignored for base-name matching: [Item&lt;X&gt;] == [Item].
-        /// </summary>
-        private static bool LineHasBlockingMods_Normalized(string? line, ISet<string> modNames)
-        {
-            if (string.IsNullOrEmpty(line) || modNames == null || modNames.Count == 0) return false;
-
-            // Local regex (no class field => avoids duplicates across partials)
-            var rxInsideBracket = new Regex(@"\[(?<inside>[^\]]+)\]", RegexOptions.Compiled);
-
-            foreach (Match m in rxInsideBracket.Matches(line))
-            {
-                var inside = m.Groups["inside"]?.Value ?? string.Empty;
-                var parts = inside.Split(':');
-                var first = parts.Length > 0 ? parts[0] : string.Empty;
-
-                // Normalize base name: "Item<Thing>" -> "Item"
-                var baseName = NormalizePlaceholderBaseLocal(first);
-
-                // Special Amount: [Amount:VALUE:NAME:TYPE] is always blocking
-                if (parts.Length == 4 &&
-                    string.Equals(NormalizePlaceholderBaseLocal(first), "Amount", StringComparison.OrdinalIgnoreCase))
-                    return true;
-
-                if (!string.IsNullOrEmpty(baseName) && modNames.Contains(baseName))
-                    return true;
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Determine if a block of code text has unresolved MOD placeholders (blocking).
-        /// Two-argument form (explicit mod name set).
-        /// </summary>
-        private static bool HasUnresolvedPlaceholders_ModsAware(string? codeText, ISet<string> modNames)
-        {
-            if (string.IsNullOrEmpty(codeText)) return false;
-            var lines = codeText.Replace("\r\n", "\n").Split('\n');
-            foreach (var line in lines)
-            {
-                if (LineHasBlockingMods_Normalized(line, modNames))
-                    return true;
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Single-argument convenience overload (legacy call sites).
-        /// Infers mod names from code text (prefers {MOD} blocks; falls back to placeholder names).
-        /// </summary>
-        private static bool HasUnresolvedPlaceholders_ModsAware(string? codeText)
-        {
-            var inferred = InferModNamesFromCode(codeText);
-            return HasUnresolvedPlaceholders_ModsAware(codeText, inferred);
         }
     }
 }
