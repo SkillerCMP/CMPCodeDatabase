@@ -7,31 +7,41 @@ namespace CMPCodeDatabase
     public partial class MainForm
     {
         /// <summary>
-        /// Blocks sending to Collector if any unresolved placeholders remain.
-        /// Uses DECLARED MOD names (from ^6=MODS) and the angle-safe checker.
+        /// Returns true if 'codeText' still has unresolved placeholders for declared MOD names.
+        /// Angle-safe (base NAME only) and Amount special-cased.
         /// </summary>
-        private bool BlockIfUnresolvedForCollector(TreeNode node)
+        private bool IsUnresolvedForCollector(string codeText)
         {
-            if (node == null) return false;
-
-            // Prefer the original template (what gating should look at). Fallback to Tag.
-            var codeTpl = string.Empty;
-            if (originalCodeTemplates != null && originalCodeTemplates.TryGetValue(node, out var tpl) && tpl != null)
-                codeTpl = tpl;
-            else
-                codeTpl = node.Tag as string ?? string.Empty;
-
-            // Declared MOD names (e.g., [Item]…[/Item], [Size]…[/Size], …)
             var declared = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             if (modDefinitions != null)
             {
                 foreach (var k in modDefinitions.Keys)
                     declared.Add(k);
             }
+            return HasUnresolvedPlaceholders_ModsAware(codeText ?? string.Empty, declared);
+        }
 
-            // Angle-safe: [NAME] and [NAME<...>] both count by base NAME; [Amount:...:...:...] always counts.
-            var unresolved = HasUnresolvedPlaceholders_ModsAware(codeTpl, declared);
-            if (unresolved)
+        /// <summary>
+        /// Prefer the actual code being sent; if that's empty, try node.Tag; finally the original template.
+        /// 'node' may be null in contexts that don't have a TreeNode.
+        /// </summary>
+        private bool BlockIfUnresolvedForCollector(TreeNode node, string codeOverride = null)
+        {
+            string codeText = codeOverride ?? string.Empty;
+
+            if (string.IsNullOrWhiteSpace(codeText) && node != null)
+            {
+                codeText = node.Tag as string ?? string.Empty;
+
+                if (string.IsNullOrWhiteSpace(codeText) && originalCodeTemplates != null)
+                {
+                    string tpl;
+                    if (originalCodeTemplates.TryGetValue(node, out tpl) && tpl != null)
+                        codeText = tpl;
+                }
+            }
+
+            if (IsUnresolvedForCollector(codeText))
             {
                 MessageBox.Show(
                     this,
@@ -41,10 +51,9 @@ namespace CMPCodeDatabase
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning
                 );
-                return true; // block
+                return true;
             }
-
-            return false; // allow
+            return false;
         }
     }
 }

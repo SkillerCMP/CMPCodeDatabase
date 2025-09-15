@@ -20,7 +20,9 @@ namespace CMPCodeDatabase
             {
                 collectorWindow = new CollectorForm();
                 foreach (var kv in collectorFallback)
+{                    if (BlockIfUnresolvedForCollector(null, kv.Value)) continue;
                     collectorWindow.AddItem(kv.Key, kv.Value);
+}
             }
             if (!collectorWindow.Visible) collectorWindow.Show(this);
             if (collectorWindow.WindowState == FormWindowState.Minimized)

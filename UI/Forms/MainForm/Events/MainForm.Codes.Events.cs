@@ -55,7 +55,7 @@ namespace CMPCodeDatabase
 
             if (collectorWindow != null && !collectorWindow.IsDisposed)
             {
-if (BlockIfUnresolvedForCollector(node)) return;
+if (BlockIfUnresolvedForCollector(node, code)) return;
                 collectorWindow.AddItem(name, code);
             }
             else
