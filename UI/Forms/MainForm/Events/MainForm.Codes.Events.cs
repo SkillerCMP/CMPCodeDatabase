@@ -55,11 +55,14 @@ namespace CMPCodeDatabase
 
             if (collectorWindow != null && !collectorWindow.IsDisposed)
             {
+if (BlockIfUnresolvedForCollector(node)) return;
                 collectorWindow.AddItem(name, code);
             }
             else
             {
-                if (!collectorFallback.ContainsKey(name)) collectorFallback[name] = code;
+
+                if (BlockIfUnresolvedForCollector(node)) return;
+if (!collectorFallback.ContainsKey(name)) collectorFallback[name] = code;
             }
             ShowCollectorWindow();
         }
