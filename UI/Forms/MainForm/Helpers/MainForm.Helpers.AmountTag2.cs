@@ -29,6 +29,18 @@ namespace CMPCodeDatabase
             var parts = core.Split(':');
             if (parts.Length < 4) return false;
 
+
+            
+            // Refuse text-amount in numeric parser (TXT or TXT<...>)
+            {
+                var _mode = (parts[3] ?? "").Trim();
+                int _lt = _mode.IndexOf('<');
+                if (_lt >= 0) _mode = _mode.Substring(0, _lt).Trim();
+                if (string.Equals(_mode, "TXT", System.StringComparison.OrdinalIgnoreCase)) return false;
+            }
+        // Fix B: refuse text-amount forms like Amount:<base>:<enc>:TXT so numeric dialog doesn't claim them
+            if (parts.Length >= 4 && parts[3].Trim().Equals("TXT", StringComparison.OrdinalIgnoreCase))
+                return false;
             title  = parts[0].Trim();
             defHex = parts[1].Trim();
             type   = parts[2].Trim();

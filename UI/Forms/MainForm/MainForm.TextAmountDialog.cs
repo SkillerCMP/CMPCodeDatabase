@@ -1,132 +1,144 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// CMPCodeDatabase — File: UI/Forms/MainForm/MainForm.TextAmountDialog.cs
-// Purpose: UI composition, menus, and layout for the MainForm.
-// Notes:
-//  • Documentation-only header added (no behavioral changes).
-//  • Keep UI hooks intact: EnsureDownloadButtons(), EnsureStartupChecks(), EnsureCloudMenu().
-//  • Database root resolution is centralized (ResolveDatabasesRoot / helpers).
-//  • Startup creates: Files\, Files\Database\, Files\Tools\ (if missing).
-//  • 'ReloadDB' clears trees and calls LoadDatabaseSelector().
-// Added: 2025-09-12
-// ─────────────────────────────────────────────────────────────────────────────
-
+// Clean replacement to fix CS1520 and add "Use Default" support for TXT dialog.
+using System;
+using System.Drawing;
 using System.Text;
+using System.Windows.Forms;
 
 namespace CMPCodeDatabase
 {
-    public partial class MainForm : Form
+    public partial class TextAmountDialog : Form
     {
-        internal class TextAmountDialog : Form
+        private readonly Encoding _encoding;
+        private readonly int _maxBytes;
+        private readonly string _encodingToken;
+
+        private readonly Label lblPrompt = new Label();
+        private readonly TextBox txtInput = new TextBox();
+        private readonly Label lblCount = new Label();
+        private readonly Button btnCancel = new Button();
+        private readonly Button btnOK = new Button();
+        private readonly Button btnUseDefault = new Button();
+
+        private readonly string defaultTextForUseButton = string.Empty;
+
+        public string ResultText { get; private set; } = string.Empty;
+
+        // Primary ctor used by callers
+        public TextAmountDialog(string encToken, int maxBytes)
         {
-            private readonly int maxBytes;
-            private readonly Encoding enc;
-            private readonly string encTokenDisplay;
-            private readonly Label lbl = new Label() { Dock = DockStyle.Top, AutoSize = true, Padding = new Padding(0,8,0,4) };
-            private readonly TextBox txt = new TextBox() { Dock = DockStyle.Top };
-            private readonly Label lblCount = new Label() { Dock = DockStyle.Top, AutoSize = true, Padding = new Padding(0,0,0,6) };
-            private readonly Button ok = new Button() { Text = "OK", Dock = DockStyle.Right, Width = 80, Margin = new Padding(4) };
-            private readonly Button cancel = new Button() { Text = "Cancel", Dock = DockStyle.Right, Width = 80, Margin = new Padding(4) };
-
-            public string? ResultText { get; private set; }
-
-            public TextAmountDialog(string encToken, int maxBytes)
-            {
-                this.maxBytes = maxBytes;
-                this.encTokenDisplay = NormalizeEncodingToken(encToken);
-                this.enc = MapEncodingToken(encToken);
-
-                Text = $"Add Item — Amount:{(maxBytes==int.MaxValue ? "NA" : new string('9', maxBytes))}:{encTokenDisplay}:TXT";
-                Width = 560; Height = 180; StartPosition = FormStartPosition.CenterParent;
-
-                var panel = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 4, Padding = new Padding(10) };
-                panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 70));
-                panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30));
-                panel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-                panel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-                panel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-                panel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-
-                lbl.Text = maxBytes == int.MaxValue ? $"Enter text ({encTokenDisplay})" : $"Enter text ({encTokenDisplay}), max {maxBytes} bytes";
-                panel.Controls.Add(lbl, 0, 0); panel.SetColumnSpan(lbl, 2);
-
-                panel.Controls.Add(txt, 0, 1); panel.SetColumnSpan(txt, 2);
-
-                panel.Controls.Add(lblCount, 0, 2); panel.SetColumnSpan(lblCount, 2);
-
-                var btnPanel = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.RightToLeft };
-                btnPanel.Controls.Add(cancel); btnPanel.Controls.Add(ok);
-                panel.Controls.Add(btnPanel, 0, 3); panel.SetColumnSpan(btnPanel, 2);
-
-                ok.Click += (s,e) => { ResultText = txt.Text ?? string.Empty; DialogResult = DialogResult.OK; };
-                cancel.Click += (s,e) => { DialogResult = DialogResult.Cancel; };
-
-                txt.TextChanged += OnTextChangedInternal;
-                Shown += (s,e) => { UpdateCountLabel(); txt.SelectionStart = txt.Text.Length; };
-
-                Controls.Add(panel);
-                AcceptButton = ok; CancelButton = cancel;
-            }
-
-            private void OnTextChangedInternal(object? sender, EventArgs e) => EnforceMaxBytes();
-
-            private void EnforceMaxBytes()
-            {
-                if (maxBytes == int.MaxValue) { UpdateCountLabel(); return; }
-                var t = txt.Text ?? string.Empty;
-                var bytes = enc.GetBytes(t);
-                if (bytes.Length <= maxBytes) { UpdateCountLabel(bytes.Length); return; }
-
-                int lo = 0, hi = t.Length;
-                while (lo < hi)
-                {
-                    int mid = (lo + hi + 1) / 2;
-                    if (enc.GetByteCount(t.Substring(0, mid)) <= maxBytes) lo = mid; else hi = mid - 1;
-                }
-                var trimmed = t.Substring(0, lo);
-                txt.TextChanged -= OnTextChangedInternal;
-                txt.Text = trimmed;
-                txt.SelectionStart = trimmed.Length;
-                txt.SelectionLength = 0;
-                txt.TextChanged += OnTextChangedInternal;
-                UpdateCountLabel(enc.GetByteCount(trimmed));
-            }
-
-            private void UpdateCountLabel(int? currentBytes = null)
-            {
-                if (currentBytes is null) currentBytes = enc.GetByteCount(txt.Text ?? string.Empty);
-                if (maxBytes == int.MaxValue)
-                    lblCount.Text = $"{currentBytes} bytes";
-                else
-                    lblCount.Text = $"{currentBytes} / {maxBytes} bytes";
-            }
+            _encodingToken = NormalizeEncodingToken(encToken);
+            _encoding = MapEncodingToken(_encodingToken);
+            _maxBytes = Math.Max(0, maxBytes);
+            InitializeUi();
         }
 
-        private static System.Text.Encoding MapEncodingToken(string token)
+        // Overload with default-text button
+        public TextAmountDialog(string encToken, int maxBytes, string defaultText)
+            : this(encToken, maxBytes)
         {
-            if (string.IsNullOrWhiteSpace(token)) return System.Text.Encoding.UTF8;
-            var norm = token.Trim().ToUpperInvariant().Replace("-", "");
-            return norm switch
+            defaultTextForUseButton = defaultText ?? string.Empty;
+            btnUseDefault.Text = string.IsNullOrWhiteSpace(defaultTextForUseButton)
+                ? "Use Default"
+                : $"Use Default ({defaultTextForUseButton})";
+            btnUseDefault.Enabled = !string.IsNullOrEmpty(defaultTextForUseButton);
+        }
+
+        private void InitializeUi()
+        {
+            this.StartPosition = FormStartPosition.CenterParent;
+            this.FormBorderStyle = FormBorderStyle.FixedDialog;
+            this.MinimizeBox = false;
+            this.MaximizeBox = false;
+            this.ClientSize = new Size(520, 170);
+
+            lblPrompt.AutoSize = true;
+            lblPrompt.Text = $"Enter text ({_encodingToken}), max {_maxBytes} bytes";
+            lblPrompt.Location = new Point(12, 12);
+
+            txtInput.Location = new Point(12, 36);
+            txtInput.Width = 492;
+            txtInput.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            txtInput.TextChanged += (s, e) => UpdateCounterAndValidate();
+
+            lblCount.AutoSize = true;
+            lblCount.Location = new Point(12, 66);
+            lblCount.ForeColor = Color.Black;
+
+            // Buttons row
+            btnCancel.Text = "Cancel";
+            btnCancel.Width = 120;
+            btnCancel.Location = new Point(12, 110);
+            btnCancel.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            btnCancel.Click += (s, e) => { this.DialogResult = DialogResult.Cancel; this.Close(); };
+
+            btnOK.Text = "OK";
+            btnOK.Width = 120;
+            btnOK.Location = new Point(142, 110);
+            btnOK.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            btnOK.Click += (s, e) =>
             {
-                "UTF08" or "UTF8" => System.Text.Encoding.UTF8,
-                "UTF16" or "UTF16LE" => System.Text.Encoding.Unicode,
-                "UTF16BE" => System.Text.Encoding.BigEndianUnicode,
-                "ASCII" => System.Text.Encoding.ASCII,
-                _ => System.Text.Encoding.UTF8,
+                this.ResultText = txtInput.Text ?? string.Empty;
+                this.DialogResult = DialogResult.OK;
+                this.Close();
             };
+
+            btnUseDefault.Text = "Use Default";
+            btnUseDefault.Width = 240;
+            btnUseDefault.Location = new Point(272, 110);
+            btnUseDefault.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            btnUseDefault.Click += (s, e) =>
+            {
+                if (!string.IsNullOrEmpty(defaultTextForUseButton))
+                {
+                    this.ResultText = defaultTextForUseButton;
+                    this.DialogResult = DialogResult.OK;
+                    this.Close();
+                }
+            };
+
+            this.Controls.Add(lblPrompt);
+            this.Controls.Add(txtInput);
+            this.Controls.Add(lblCount);
+            this.Controls.Add(btnCancel);
+            this.Controls.Add(btnOK);
+            this.Controls.Add(btnUseDefault);
+
+            UpdateCounterAndValidate();
+        }
+
+        private void UpdateCounterAndValidate()
+        {
+            var text = txtInput.Text ?? string.Empty;
+            int bytes = _encoding.GetByteCount(text);
+            lblCount.Text = $"{bytes} / {_maxBytes} bytes";
+            bool tooLong = bytes > _maxBytes && _maxBytes > 0;
+            lblCount.ForeColor = tooLong ? Color.DarkRed : Color.Black;
+            btnOK.Enabled = !tooLong;
         }
 
         private static string NormalizeEncodingToken(string token)
         {
             if (string.IsNullOrWhiteSpace(token)) return "UTF08";
-            var norm = token.Trim().ToUpperInvariant().Replace("-", "");
-            return norm switch
+            return token.Trim().ToUpperInvariant().Replace("-", "");
+        }
+
+        private static Encoding MapEncodingToken(string token)
+        {
+            switch (token)
             {
-                "UTF8" or "UTF08" => "UTF08",
-                "UTF16" or "UTF16LE" => "UTF16LE",
-                "UTF16BE" => "UTF16BE",
-                "ASCII" => "ASCII",
-                _ => token.Trim()
-            };
+                case "UTF08":
+                case "UTF8":
+                    return Encoding.UTF8;
+                case "UTF16":
+                case "UTF16LE":
+                    return Encoding.Unicode;
+                case "UTF16BE":
+                    return Encoding.BigEndianUnicode;
+                case "ASCII":
+                    return Encoding.ASCII;
+                default:
+                    return Encoding.UTF8;
+            }
         }
     }
 }

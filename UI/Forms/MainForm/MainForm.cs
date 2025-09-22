@@ -140,7 +140,20 @@ namespace CMPCodeDatabase
                     this.defaultRawHex = System.Text.RegularExpressions.Regex.Replace(defaultHex ?? "", "[^0-9A-Fa-f]", "").ToUpperInvariant();
                     this.byteSize = Math.Max(1, defaultRawHex.Length / 2);
 
-                    var label = (boxLabel ?? string.Empty).Trim('<','>',' '); // safety: remove <>
+                    
+                    // Enforce proper byte size for floating types regardless of default hex length
+                    switch (this.type)
+                    {
+                        case "FLOAT":
+                        case "FLOAT32":
+                            this.byteSize = 4;
+                            break;
+                        case "DOUBLE":
+                        case "FLOAT64":
+                            this.byteSize = 8;
+                            break;
+                    }
+var label = (boxLabel ?? string.Empty).Trim('<','>',' '); // safety: remove <>
 var caption = string.IsNullOrWhiteSpace(title) ? "Amount" : title;
 if (!string.IsNullOrWhiteSpace(label)) caption += " " + label;
 Text = caption;

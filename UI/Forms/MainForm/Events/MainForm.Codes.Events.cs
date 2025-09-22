@@ -1,3 +1,4 @@
+using System.Text;
 // ─────────────────────────────────────────────────────────────────────────────
 // CMPCodeDatabase — File: UI/Forms/MainForm/Events/MainForm.Codes.Events.cs
 // Purpose: MainForm event handlers for buttons/menus and code actions.
@@ -195,6 +196,50 @@ while (true)
         }
     }
     // 3) Special numeric Amount dialog (with optional <Label>)
+    // TXT Amount branch — Amount:<base>:<enc>:TXT[<angles>]
+else if (TryParseTextAmountTag(raw, out var tBaseTxt, out var tEncToken) || TryParseTextAmountTag(core, out tBaseTxt, out tEncToken))
+{
+    // Derive maximum byte length if <base> is all '9'
+    int maxBytes = int.MaxValue;
+    var bt = (tBaseTxt ?? string.Empty).Trim();
+    if (bt.Length > 0)
+    {
+        bool all9 = true;
+        for (int qi = 0; qi < bt.Length; qi++) { if (bt[qi] != '9') { all9 = false; break; } }
+        if (all9) maxBytes = bt.Length;
+    }
+
+    // Extract the angle label after TXT<...> to show in header
+    string txtLabel = "";
+    int posTxt = raw.IndexOf(":TXT", StringComparison.OrdinalIgnoreCase);
+    if (posTxt >= 0)
+    {
+        int lt = raw.IndexOf('<', posTxt);
+        int gt = (lt >= 0) ? raw.IndexOf('>', lt + 1) : -1;
+        if (lt >= 0 && gt > lt) txtLabel = raw.Substring(lt + 1, gt - lt - 1);
+    }
+
+    using (var dlg = new TextAmountDialog(tEncToken, maxBytes, bt))
+    {
+        dlg.Text = string.IsNullOrWhiteSpace(txtLabel) ? "Amount" : $"Amount <{txtLabel}>";
+        if (dlg.ShowDialog(this) != DialogResult.OK) break;
+        var plain = dlg.ResultText ?? string.Empty;
+        if (string.IsNullOrEmpty(plain)) break;
+
+        // Insert plain text result (not hex)
+        var v = plain;
+
+        tpl = tpl.Substring(0, s0) + v + tpl.Substring(e0 + 1);
+        node.Tag = tpl;
+        txtCodePreview.Text = tpl;
+        try { txtCodePreview.HideSelection = false; txtCodePreview.Select(s0, (e0 - s0 + 1)); txtCodePreview.ScrollToCaret(); txtCodePreview.Update(); } catch { }
+
+        AppendAppliedModName(node, "Amount");
+
+        nextStart = s0 + v.Length;
+        continue;
+    }
+}
     else if (TryParseSpecialAmountTag2(raw, out var tTitle, out var tDef, out var tType, out var tEndian, out var tBox))
     {
         using (var dlg = new SpecialAmountDialog(tTitle, tDef, tType, tEndian, tBox))
