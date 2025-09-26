@@ -76,8 +76,8 @@ namespace CMPCodeDatabase
             _txtGameSearch.TextChanged += (s, e) =>
             {
                 // Keep base snapshot fresh only when the visible list grew (external reload)
-                CaptureCurrentAsBaseIfBetter();
                 ApplyGamesFilter(_txtGameSearch.Text);
+            CaptureCurrentAsBaseIfBetter();
             };
             _txtGameSearch.KeyDown += (s, e) =>
             {
@@ -94,7 +94,12 @@ namespace CMPCodeDatabase
             // If we are rebuilding due to our own filtering, ignore
             if (_filteringInternal) return;
 
-            // If no base yet, or current tree has MORE items (likely external reload), refresh base
+            
+        // Do not capture while a filter is active; only capture the base
+        // when the search box is empty (prevents caching the filtered list).
+        if (!string.IsNullOrWhiteSpace(_txtGameSearch?.Text))
+            return;
+// If no base yet, or current tree has MORE items (likely external reload), refresh base
             if (_allGames.Count == 0 || treeGames.Nodes.Count > _allGames.Count)
             {
                 _allGames = treeGames.Nodes.Cast<TreeNode>().Select(n => new GameEntry

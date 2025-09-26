@@ -114,7 +114,24 @@ namespace CMPCodeDatabase
             var dbName = dbSelector.SelectedItem?.ToString() ?? string.Empty;
             _dbSelectedPath = Path.Combine(_dbRoot_FilesDatabase, dbName);
             LoadGames_FilesRoot();
-        }
+        
+
+            // Reset search state and base cache when switching DB
+            try
+            {
+                _txtGameSearch?.Clear();
+
+                // Clear base so no stale list is reused
+                _allGames.Clear();
+                _baseSig = 0;
+                _lastHitIndex = -1;
+
+                // Capture the freshly loaded DB as the new base, then apply empty filter
+                CaptureCurrentAsBaseIfBetter();
+                ApplyGamesFilter(string.Empty);
+            }
+            catch { /* best-effort */ }
+}
 
         private void LoadGames_FilesRoot()
         {
