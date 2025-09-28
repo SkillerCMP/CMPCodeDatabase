@@ -55,6 +55,8 @@ namespace CMPCodeDatabase
                     treeCodes.BeginUpdate();
             treeCodes.Nodes.Clear();
                     txtCodePreview.Clear();
+					treeCodes.EndUpdate();
+TreeViewExtent.UpdateHorizontalExtent(treeCodes);
                 }
 
         private void TreeGames_AfterSelect(object? sender, TreeViewEventArgs e)
@@ -65,7 +67,8 @@ namespace CMPCodeDatabase
 
         private void LoadCodes(string folder)
                 {
-                    treeCodes.Nodes.Clear();
+                    treeCodes.BeginUpdate();
+					treeCodes.Nodes.Clear();
                     originalCodeTemplates.Clear();
                     originalNodeNames.Clear();
                     nodeNotes.Clear();
@@ -92,6 +95,7 @@ namespace CMPCodeDatabase
                         rootCaptionForFolder = !string.IsNullOrEmpty(header.GameId) ? $"{_name} - {header.GameId}" : _name;
                     }
                     treeCodes.Nodes[0].Text = rootCaptionForFolder;
+                    originalNodeNames[treeCodes.Nodes[0]] = rootCaptionForFolder;
                 }
             }
             catch { }
@@ -100,11 +104,15 @@ namespace CMPCodeDatabase
 
                     foreach (TreeNode n in treeCodes.Nodes) n.Collapse();
                     txtCodePreview.Clear();
+					treeCodes.EndUpdate();
+    TreeViewExtent.UpdateHorizontalExtent(treeCodes);
                 }
 
         private void BuildTreeFromFolder(string currentFolder, TreeNode? parentNode)
                 {
-                    var folderNode = new TreeNode(Path.GetFileName(currentFolder));
+                    var __folderName = Path.GetFileName(currentFolder);
+                    var folderNode = new TreeNode(__folderName);
+                    originalNodeNames[folderNode] = __folderName;
 
                     foreach (var sub in Directory.GetDirectories(currentFolder))
                         BuildTreeFromFolder(sub, folderNode);
@@ -176,6 +184,7 @@ TreeNode? currentGroup = null;
                                 if (caption.Length == 0) caption = "FILE";
                                 currentFileGroup = new TreeNode(caption);
                                 parentNode.Nodes.Add(currentFileGroup);
+                                originalNodeNames[currentFileGroup] = caption;
                                 currentGroup = null;
                                 continue; // do not treat as content line
                             }
