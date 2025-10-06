@@ -52,11 +52,9 @@ namespace CMPCodeDatabase
             var idHashTable = ParseIdHash(text);
             gridIds.DataSource = idHashTable;
             EnsureIdGridColumns();
-
-            // Credits
-            var creditsCounts = ParseCredits(text);
-            PopulateCredits(creditsCounts);
-        }
+            // Credits (roles-aware)
+            PopulateCreditsFromTextWithRoles(text);
+}
 
         // Overload for counts-only maps
         private void PopulateCredits(Dictionary<string, int> counts)

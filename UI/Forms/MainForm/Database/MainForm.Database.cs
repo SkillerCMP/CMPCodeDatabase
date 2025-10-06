@@ -337,15 +337,15 @@ else if (currentModTag != null)
                                     else parts = new[] { line };
 
                                     parts = parts.Select(p => p.Trim()).ToArray();
-                                    if (parts.Length >= headers.Count)
-                                    {
-                                        modRows[currentModTag].Add(parts);
-                                        // Also seed simple name/value if first two columns exist
-                                        if (parts.Length >= 2)
-                                        {
-                                            currentModList!.Add((parts[0], parts[1]));
-                                        }
-                                    }
+
+// Accept rows that have at least VALUE + NAME; INFO is optional.
+// (ModGridDialog already pads missing cells to empty string.)
+if (parts.Length >= 2)
+{
+    modRows[currentModTag].Add(parts);
+    currentModList!.Add((parts[0], parts[1]));
+}
+
                                 }
                                 else
                                 {
