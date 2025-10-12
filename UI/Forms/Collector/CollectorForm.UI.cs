@@ -23,8 +23,8 @@ namespace CMPCodeDatabase
             // Window
             Text = "Code Collector";
             StartPosition = FormStartPosition.CenterParent;
-            MinimumSize = new Size(560, 580);
-            Size = new Size(680, 720);
+            MinimumSize = new Size(660, 680);
+            Size = new Size(780, 820);
 
             // List with checkboxes
             clbCollector = new CheckedListBox

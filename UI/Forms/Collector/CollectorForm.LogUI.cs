@@ -32,7 +32,8 @@ namespace CMPCodeDatabase
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
-            EnsureLogPanel();
+                        this.Padding = new Padding(0);
+EnsureLogPanel();
             RelayoutButtons();
             WireStreamingRunButtons();
             try { MoveRunAndPatcherBarsIntoLogPanel(); } catch { }
@@ -45,8 +46,8 @@ namespace CMPCodeDatabase
         {
             if (_logPanel != null && !_logPanel.IsDisposed) return;
 
-            _logPanel = new Panel { Dock = DockStyle.Bottom, Height = 180, Padding = new Padding(8, 6, 8, 8) };
-            var bottomBar = new Panel { Dock = DockStyle.Bottom, Height = 30 };
+            _logPanel = new Panel { Dock = DockStyle.Bottom, Height = 200, Padding = new Padding(8, 6, 8, 0) , Margin = new Padding(0)};
+            var bottomBar = new Panel { Dock = DockStyle.Bottom, Height = 5 , Margin = new Padding(0)};
             var btnClearLog = new Button { Text = "Clear Log", Anchor = AnchorStyles.Bottom | AnchorStyles.Right, Width = 100, Height = 24 };
             _rtbLog = new RichTextBox
             {
@@ -67,7 +68,8 @@ namespace CMPCodeDatabase
             _logPanel.Controls.Add(_rtbLog);
             _logPanel.Controls.Add(bottomBar);
             Controls.Add(_logPanel);
-            _logPanel.BringToFront();
+                        _logPanel.BringToFront();
+_logPanel.BringToFront();
         }
 
         private void RelayoutButtons()

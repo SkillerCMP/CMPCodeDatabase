@@ -7,7 +7,6 @@
 //  • Database root resolution is centralized (ResolveDatabasesRoot / helpers).
 //  • Startup creates: Files\, Files\Database\, Files\Tools\ (if missing).
 //  • 'ReloadDB' clears trees and calls LoadDatabaseSelector().
-// Added: 2025-09-12
 // ─────────────────────────────────────────────────────────────────────────────
 
 using System;
@@ -33,8 +32,15 @@ namespace CMPCodeDatabase
             try { TweakBackupsBar(); } catch { }
             try { WireBackupBarLeftLayout(); } catch { }
 
-            // Make the log window taller (~3x current height), defer until initial layout completes.
-            try { BeginInvoke(new Action(() => EnlargeLogWindowByFactor(3.0))); } catch { }
+            // Collapse any empty bottom-docked placeholders and zero padding/margins
+            try { CollapseEmptyBottomDockers(); } catch { }
+            try { this.Padding = Padding.Empty; this.Margin = Padding.Empty; if (_logPanel != null) { _logPanel.Padding = Padding.Empty; _logPanel.Margin = Padding.Empty; } } catch { }
+
+            // Final anti-gap pass (auto-size and flatten bottom host chain)
+            try { FixCollectorBottomGap(); } catch { }
+
+            // Make the log window taller (best-effort, after initial layout completes).
+            try { BeginInvoke(new Action(() => EnlargeLogWindowByFactor(1.0))); } catch { }
         }
 
         private void RenameRunButtons()
@@ -60,12 +66,23 @@ namespace CMPCodeDatabase
             {
                 try
                 {
+                    var oldParent = runBar.Parent;      // capture BEFORE reparent
                     runBar.Dock = DockStyle.Top;
                     runBar.Parent?.Controls.Remove(runBar);
                     _logPanel.Controls.Add(runBar);
                     runBar.BringToFront();
                     TweakBackupsBar();
                     WireBackupBarLeftLayout();
+
+                    // Collapse the old parent if it became an empty bottom-docked placeholder
+                    if (oldParent != null && oldParent.Controls.Count == 0 && oldParent.Dock == DockStyle.Bottom)
+                    {
+                        oldParent.Visible = false;
+                        oldParent.Dock = DockStyle.Top;
+                        oldParent.Height = 0;
+                        oldParent.Margin = Padding.Empty;
+                        oldParent.Padding = Padding.Empty;
+                    }
                 }
                 catch { }
             }
@@ -79,9 +96,20 @@ namespace CMPCodeDatabase
                     var p = patcher[0];
                     if (p.Parent != _logPanel)
                     {
+                        var oldParentP = p.Parent;      // capture BEFORE reparent
                         p.Parent?.Controls.Remove(p);
                         p.Dock = DockStyle.Top;
                         _logPanel.Controls.Add(p);
+
+                        // Collapse the old parent if it became an empty bottom-docked placeholder
+                        if (oldParentP != null && oldParentP.Controls.Count == 0 && oldParentP.Dock == DockStyle.Bottom)
+                        {
+                            oldParentP.Visible = false;
+                            oldParentP.Dock = DockStyle.Top;
+                            oldParentP.Height = 0;
+                            oldParentP.Margin = Padding.Empty;
+                            oldParentP.Padding = Padding.Empty;
+                        }
                     }
 
                     if (runBar != null)
@@ -93,6 +121,9 @@ namespace CMPCodeDatabase
                 }
             }
             catch { }
+
+            // Final sweep, in case any other bottom placeholders remain
+            try { CollapseEmptyBottomDockers(); } catch { }
         }
 
         private void MoveCopyButtonsBesideSelectAll()
@@ -226,51 +257,165 @@ namespace CMPCodeDatabase
         /// Best-effort; clipped to form height.
         /// </summary>
         private void EnlargeLogWindowByFactor(double factor)
+        {
+            if (_logPanel == null || _logPanel.IsDisposed) return;
+
+            const double ratio = 0.40; // 40%
+
+            // Case 1: _logPanel is inside a SplitContainer → adjust splitter
+            var split = GetAncestor<SplitContainer>(_logPanel);
+            if (split != null && split.Orientation == Orientation.Horizontal)
+            {
+                // Give ~40% to the panel with the log.
+                int target = (int)(split.Height * ratio);
+                if (_logPanel.Parent == split.Panel1)
+                    split.SplitterDistance = target;                 // top (Panel1) = 40%
+                else if (_logPanel.Parent == split.Panel2)
+                    split.SplitterDistance = split.Height - target;  // bottom (Panel2) = 60%
+                return;
+            }
+
+            // Case 2: TableLayoutPanel → change row percent to 40%
+            var table = _logPanel.Parent as TableLayoutPanel;
+            if (table != null)
+            {
+                int row = table.GetRow(_logPanel);
+
+                // Make rows percent so we can redistribute
+                for (int i = 0; i < table.RowStyles.Count; i++)
+                    table.RowStyles[i].SizeType = SizeType.Percent;
+
+                // Log row = 40%, others share remaining 60%
+                int others = Math.Max(1, table.RowStyles.Count - 1);
+                float otherPct = (float)((1.0 - ratio) * 100.0 / others); // e.g., 60 / others
+
+                for (int i = 0; i < table.RowStyles.Count; i++)
+                    table.RowStyles[i].Height = (i == row) ? 40f : otherPct;
+
+                table.PerformLayout();
+                return;
+            }
+
+            // Case 3: plain panel → set to ~40% of form client height (clamped)
+            int desired = (int)(this.ClientSize.Height * ratio);
+            desired = Math.Max(80, Math.Min(desired, this.ClientSize.Height - 60));
+            _logPanel.Height = desired;
+            _logPanel.PerformLayout();
+        }
+
+        /// <summary>
+        /// Collapses any empty bottom-docked containers that would otherwise reserve blank space.
+        /// </summary>
+        private void CollapseEmptyBottomDockers()
+        {
+            try
+            {
+                foreach (Control c in this.Controls)
+                {
+                    if (c.Dock == DockStyle.Bottom && (c.Controls.Count == 0 || c.Height < 8))
+                    {
+                        c.Visible = false;            // don't render
+                        c.Dock = DockStyle.Top;       // neutralize docking
+                        c.Height = 0;                 // release reserved space
+                        c.Margin = Padding.Empty;
+                        c.Padding = Padding.Empty;
+                    }
+                }
+            }
+            catch { /* best-effort */ }
+        }
+
+        /// <summary>
+        /// Final pass: ensure the bottom bar shrinks to content and no oversized host keeps extra space.
+        /// </summary>
+        private void FixCollectorBottomGap()
+        {
+            try
+            {
+                var openBtn    = FindByTextDeep<Button>(this, "Open Backups");
+                var restoreBtn = FindByTextDeep<Button>(this, "Restore Backup");
+                var clearBtn   = FindByTextDeep<Button>(this, "Clear Log");
+                Control bar = openBtn?.Parent ?? restoreBtn?.Parent ?? clearBtn?.Parent;
+                if (bar == null) return;
+
+                EnsureBottomBarAutoSize(bar);
+                FlattenBottomBarHostChain(bar);
+            }
+            catch { /* best-effort */ }
+        }
+
+private void EnsureBottomBarAutoSize(Control bar)
 {
-    if (_logPanel == null || _logPanel.IsDisposed) return;
-
-    const double ratio = 0.30; // 30%
-
-    // Case 1: _logPanel is inside a SplitContainer → adjust splitter
-    var split = GetAncestor<SplitContainer>(_logPanel);
-    if (split != null && split.Orientation == Orientation.Horizontal)
+    try
     {
-        // Give ~30% to the panel with the log.
-        int target = (int)(split.Height * ratio);
-        if (_logPanel.Parent == split.Panel1)
-            split.SplitterDistance = target;                 // top (Panel1) = 30%
-        else if (_logPanel.Parent == split.Panel2)
-            split.SplitterDistance = split.Height - target;  // bottom (Panel2) = 30%
-        return;
+        // Size to content and sit at the bottom
+        bar.Margin = Padding.Empty;
+        bar.Padding = Padding.Empty;
+        bar.AutoSize = true;
+
+        // Some containers (Form/UserControl) have AutoSizeMode; set it only if present
+        var asmProp = bar.GetType().GetProperty("AutoSizeMode");
+        if (asmProp != null && asmProp.PropertyType == typeof(AutoSizeMode))
+        {
+            try { asmProp.SetValue(bar, AutoSizeMode.GrowAndShrink, null); } catch { }
+        }
+
+        bar.Dock = DockStyle.Bottom;
+
+        // Normalize child margins to avoid accidental extra height
+        foreach (Control x in bar.Controls)
+            x.Margin = new Padding(6, 3, 6, 3);
+
+        // Clamp to preferred height so the bar doesn't keep extra space
+        int prefH = bar.PreferredSize.Height;
+        if (prefH > 0) bar.Height = prefH;
     }
-
-    // Case 2: TableLayoutPanel → change row percent to 30%
-    var table = _logPanel.Parent as TableLayoutPanel;
-    if (table != null)
-    {
-        int row = table.GetRow(_logPanel);
-
-        // Make rows percent so we can redistribute
-        for (int i = 0; i < table.RowStyles.Count; i++)
-            table.RowStyles[i].SizeType = SizeType.Percent;
-
-        // Log row = 30%, others share remaining 70%
-        int others = Math.Max(1, table.RowStyles.Count - 1);
-        float otherPct = (float)((1.0 - ratio) * 100.0 / others); // e.g., 70 / others
-
-        for (int i = 0; i < table.RowStyles.Count; i++)
-            table.RowStyles[i].Height = (i == row) ? 30f : otherPct;
-
-        table.PerformLayout();
-        return;
-    }
-
-    // Case 3: plain panel → set to ~30% of form client height (clamped)
-    int desired = (int)(this.ClientSize.Height * ratio);
-    desired = Math.Max(80, Math.Min(desired, this.ClientSize.Height - 60));
-    _logPanel.Height = desired;
-    _logPanel.PerformLayout();
+    catch { }
 }
+
+        private void FlattenBottomBarHostChain(Control bar)
+        {
+            try
+            {
+                Control host = bar.Parent;
+                if (host == null) return;
+
+                // Walk up: if a parent is bottom-docked and only hosts this bar, remove/neutralize it.
+                while (host != null && host != this && host.Controls.Count <= 1 && host.Dock == DockStyle.Bottom)
+                {
+                    var parent = host.Parent;
+
+                    host.Controls.Remove(bar);
+                    bar.Dock = DockStyle.Bottom;
+                    if (parent != null)
+                    {
+                        parent.Controls.Add(bar);
+                        parent.Controls.SetChildIndex(bar, 0);
+                    }
+
+                    // Neutralize the empty host
+                    host.Visible = false;
+                    host.Dock = DockStyle.Top;
+                    host.Height = 0;
+                    host.Margin = Padding.Empty;
+                    host.Padding = Padding.Empty;
+
+                    host = parent;
+                }
+
+                // Make sure some central container fills remaining space
+                foreach (Control c in this.Controls)
+                {
+                    if (c == bar) continue;
+                    if (c.Dock == DockStyle.Fill || c is SplitContainer || c is TableLayoutPanel)
+                    {
+                        c.Dock = DockStyle.Fill;
+                        break;
+                    }
+                }
+            }
+            catch { }
+        }
 
         private static T? GetAncestor<T>(Control c) where T : class
         {
