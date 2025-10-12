@@ -30,3 +30,9 @@ Key fields:
 
 ## License
 GPL-3.0. See `LICENSE`.
+
+## For Original Database Files
+- [Apollo Savepatch Files](https://github.com/bucanero/apollo-patches))
+- [Discord Usercodes](https://docs.google.com/spreadsheets/d/1pln64WRA8QhhrW1QBDEn97HEbp4gdvBNd3GnrC4Bg5c/edit?gid=0#gid=0)
+
+
