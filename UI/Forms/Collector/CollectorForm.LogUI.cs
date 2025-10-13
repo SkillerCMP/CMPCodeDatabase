@@ -170,22 +170,35 @@ _logPanel.BringToFront();
         }
 
         private void AppendLog(string text)
-        {
-            if (_rtbLog == null || _rtbLog.IsDisposed) return;
-            if (InvokeRequired) { BeginInvoke((Action)(() => AppendLog(text))); return; }
+        {{
+    if (_rtbLog == null || _rtbLog.IsDisposed) return;
+    if (InvokeRequired) { BeginInvoke((Action)(() => AppendLog(text))); return; }
 
-            _rtbLog.AppendText(text);
-            if (!text.EndsWith(Environment.NewLine)) _rtbLog.AppendText(Environment.NewLine);
+    // Choose color + update status purely from log text (no OK handling)
+    var color = ClassifyLogAndUpdateStatus(text);
 
-            // Optional cap to last ~5000 lines
-            if (_rtbLog.Lines.Length > 5000)
-            {
-                var keep = _rtbLog.Lines.Skip(_rtbLog.Lines.Length - 5000).ToArray();
-                _rtbLog.Lines = keep;
-            }
+    // append with color
+    int start = _rtbLog.TextLength;
+    _rtbLog.SelectionStart = start;
+    _rtbLog.SelectionLength = 0;
+    _rtbLog.SelectionColor = color;
 
-            _rtbLog.SelectionStart = _rtbLog.TextLength;
-            _rtbLog.ScrollToCaret();
+    _rtbLog.AppendText(text);
+    if (!text.EndsWith(Environment.NewLine)) _rtbLog.AppendText(Environment.NewLine);
+
+    // cap to last ~5000 lines
+    if (_rtbLog.Lines.Length > 5000)
+    {
+        var keep = _rtbLog.Lines.Skip(_rtbLog.Lines.Length - 5000).ToArray();
+        _rtbLog.Lines = keep;
+    }
+
+    _rtbLog.SelectionStart = _rtbLog.TextLength;
+    _rtbLog.SelectionColor = SystemColors.WindowText; // reset
+    _rtbLog.ScrollToCaret();
+}
+
+
         }
 
         private void ClearLog()

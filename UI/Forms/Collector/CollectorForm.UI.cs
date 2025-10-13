@@ -34,6 +34,12 @@ namespace CMPCodeDatabase
                 HorizontalScrollbar = true,
                 CheckOnClick = true
             };
+            InitCollectorOwnerDraw();
+            // Ensure event hook even if partial didn't run yet
+            clbCollector.DrawMode = DrawMode.OwnerDrawFixed;
+            if (clbCollector.ItemHeight < 18) clbCollector.ItemHeight = 18;
+            clbCollector.DrawItem -= clbCollector_DrawItem;
+            clbCollector.DrawItem += clbCollector_DrawItem;
 
             // === Top PATCH bar (restored) ===
             var patchBar = new FlowLayoutPanel
