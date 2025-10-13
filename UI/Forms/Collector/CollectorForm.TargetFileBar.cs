@@ -18,16 +18,14 @@ namespace CMPCodeDatabase
 {
     public partial class CollectorForm : Form
     {
-        private void SetDataFilePath(string? path)
-        {
-            DataFilePath = string.IsNullOrWhiteSpace(path) ? null : path;
-            txtDataFile.Text = DataFilePath ?? string.Empty;
-            try
-            {
-                tt.SetToolTip(txtDataFile, DataFilePath ?? string.Empty);
-            }
-            catch { }
-        }
+private void SetDataFilePath(string? path)
+{
+    DataFilePath = string.IsNullOrWhiteSpace(path) ? null : path;
+    txtDataFile.Text = DataFilePath ?? string.Empty;
+    try { tt.SetToolTip(txtDataFile, DataFilePath ?? string.Empty); } catch { }
+    OnTargetFileChanged(DataFilePath);   // clears ❌ so you can re-test on the new file
+}
+
 
         private void BrowseDataFile()
         {
