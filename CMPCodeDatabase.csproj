@@ -8,9 +8,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>CMPCodeDatabase</AssemblyName>
     <RootNamespace>CMPCodeDatabase</RootNamespace>
-  <Version>1.03.0</Version>
-  <FileVersion>1.0.3.0</FileVersion>
-  <AssemblyVersion>1.0.3.0</AssemblyVersion>
-  <InformationalVersion>1.03</InformationalVersion>
+  <Version>1.04.0</Version>
+  <FileVersion>1.0.4.0</FileVersion>
+  <AssemblyVersion>1.0.4.0</AssemblyVersion>
+  <InformationalVersion>1.04</InformationalVersion>
   </PropertyGroup>
 </Project>

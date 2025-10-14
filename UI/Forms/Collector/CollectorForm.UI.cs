@@ -20,7 +20,7 @@ namespace CMPCodeDatabase
     {
         public CollectorForm()
         {
-            // Window
+            // Actual Window Size
             Text = "Code Collector";
             StartPosition = FormStartPosition.CenterParent;
             MinimumSize = new Size(660, 680);
@@ -100,7 +100,7 @@ namespace CMPCodeDatabase
             var bottomPanel = new Panel
             {
                 Dock = DockStyle.Bottom,
-                Height = 48,
+                Height = 0, // Bottom Grey Section Under Bottom Boxs
                 Padding = new Padding(8)
             };
 
@@ -149,8 +149,9 @@ namespace CMPCodeDatabase
             Controls.Add(clbCollector);
             Controls.Add(bottomPanel);
             Controls.Add(opsPanel);
-            Controls.Add(dataBar);   // new data bar just under patch bar
-            Controls.Add(patchBar);  // patch bar at the very top
+            Controls.Add(dataBar);
+            Controls.Add(patchBar);
+// patch bar at the very top
         }
     }
 }

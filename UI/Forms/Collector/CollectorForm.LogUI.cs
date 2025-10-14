@@ -68,8 +68,8 @@ EnsureLogPanel();
             _logPanel.Controls.Add(_rtbLog);
             _logPanel.Controls.Add(bottomBar);
             Controls.Add(_logPanel);
-                        _logPanel.BringToFront();
-_logPanel.BringToFront();
+                        // _logPanel.BringToFront(); // removed to prevent overlay over Fill
+// _logPanel.BringToFront(); // removed to prevent overlay over Fill
         }
 
         private void RelayoutButtons()
