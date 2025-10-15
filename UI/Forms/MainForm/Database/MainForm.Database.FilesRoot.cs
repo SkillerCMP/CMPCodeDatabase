@@ -99,7 +99,7 @@ namespace CMPCodeDatabase
             if (string.IsNullOrWhiteSpace(_dbRoot_FilesDatabase) || !Directory.Exists(_dbRoot_FilesDatabase))
                 return;
 
-            foreach (var folder in Directory.GetDirectories(_dbRoot_FilesDatabase))
+            foreach (var folder in Directory.EnumerateDirectories(_dbRoot_FilesDatabase))
                 dbSelector.Items.Add(Path.GetFileName(folder));
 
             if (dbSelector.Items.Count > 0)
@@ -139,13 +139,14 @@ namespace CMPCodeDatabase
             if (string.IsNullOrWhiteSpace(_dbSelectedPath) || !Directory.Exists(_dbSelectedPath)) return;
 
             // Folders as games (legacy behavior)
-            foreach (var folder in Directory.GetDirectories(_dbSelectedPath))
+            foreach (var folder in Directory.EnumerateDirectories(_dbSelectedPath))
                 treeGames.Nodes.Add(new TreeNode(Path.GetFileName(folder)) { Tag = folder });
 
-            // Top-level *.txt files as games (new behavior)
-            foreach (var file in Directory.GetFiles(_dbSelectedPath, "*.txt"))
+            // Top-level *.txt files as games (new behavior; fast listing)
+            foreach (var file in Directory.EnumerateFiles(_dbSelectedPath, "*.txt"))
             {
-                var display = TryReadGameNameFromTxt(file) ?? CleanDisplayNameFromFile(file);
+                // Use filename-derived display for fast listing (no header reads here)
+                var display = CleanDisplayNameFromFile(file);
                 treeGames.Nodes.Add(new TreeNode(display) { Tag = file });
             }
 
@@ -178,7 +179,8 @@ namespace CMPCodeDatabase
         /// </summary>
         private void LoadCodesFromSingleFile(string filePath, string gameDisplayName)
         {
-            treeCodes.Nodes.Clear();
+            treeCodes.BeginUpdate();
+treeCodes.Nodes.Clear();
 
             // Reset parsing state (mirrors LoadCodes behavior)
             originalCodeTemplates.Clear();
@@ -197,6 +199,9 @@ namespace CMPCodeDatabase
             ApplyBoldStyling(treeCodes.Nodes);
             foreach (TreeNode n in treeCodes.Nodes) n.Collapse();
             txtCodePreview.Clear();
+            treeCodes.EndUpdate();
+            TreeViewExtent.UpdateHorizontalExtent(treeCodes);
+            
         }
 
         /// <summary>

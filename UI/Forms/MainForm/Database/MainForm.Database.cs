@@ -114,10 +114,10 @@ TreeViewExtent.UpdateHorizontalExtent(treeCodes);
                     var folderNode = new TreeNode(__folderName);
                     originalNodeNames[folderNode] = __folderName;
 
-                    foreach (var sub in Directory.GetDirectories(currentFolder))
+                    foreach (var sub in Directory.EnumerateDirectories(currentFolder))
                         BuildTreeFromFolder(sub, folderNode);
 
-                    var txtFiles = Directory.GetFiles(currentFolder, "*.txt");
+                    var txtFiles = Directory.EnumerateFiles(currentFolder, "*.txt").ToArray();
                     if (txtFiles.Length > 0)
                         ParseCodeFilesInFolder(txtFiles, folderNode);
 
