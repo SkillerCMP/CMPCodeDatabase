@@ -379,7 +379,7 @@ if (parts.Length >= 2)
 
                                 if (originalCodeTemplates.TryGetValue(t, out var codeTpl))
                                 {
-                                    bool should = ShouldShowModBadgeNormalized(codeTpl, __available);
+                                    bool should = ShouldShowModBadgeSimple(codeTpl) || ShouldShowModBadge(codeTpl, __available);
                                     if (should) nodeHasMod.Add(t); else nodeHasMod.Remove(t);
                                     t.Text = GetDisplayName(t);
                                 }

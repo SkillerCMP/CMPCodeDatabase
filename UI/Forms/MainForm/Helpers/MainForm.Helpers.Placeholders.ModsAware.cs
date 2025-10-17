@@ -47,13 +47,15 @@ namespace CMPCodeDatabase
                 var inside = (m.Groups["inside"]?.Value ?? string.Empty).Trim();
                 if (!LooksLikePlaceholder(inside)) continue;
 
-                // Amount is always blocking
                 var parts = inside.Split(':');
                 var first = parts.Length > 0 ? parts[0] : string.Empty;
-                if (parts.Length == 4 && string.Equals(PlaceholderBase(first), "Amount", StringComparison.OrdinalIgnoreCase))
-                    return true;
-
                 var baseName = PlaceholderBase(first);
+
+                // Special MODs that are ALWAYS blocking (regardless of declared set)
+                if (string.Equals(baseName, "Amount", StringComparison.OrdinalIgnoreCase)) return true;
+                if (string.Equals(baseName, "Joker", StringComparison.OrdinalIgnoreCase))  return true;
+                if (string.Equals(baseName, "STAR", StringComparison.OrdinalIgnoreCase))   return true;
+
                 if (!IsIdentifier(baseName)) continue;
 
                 // Only unresolved if declared set contains the base name

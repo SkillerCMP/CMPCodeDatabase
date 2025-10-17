@@ -38,6 +38,12 @@ namespace CMPCodeDatabase
                 // Special [MOD]: [Amount:…:…:…] (case-insensitive)
                 if (parts.Length == 4 && parts[0].Equals("Amount", StringComparison.OrdinalIgnoreCase))
                     return true;
+                // Treat Joker / JKR / STAR like Amount — always show -M-
+                if (parts[0].Equals("Joker", StringComparison.OrdinalIgnoreCase) ||
+                    parts[0].Equals("JKR",   StringComparison.OrdinalIgnoreCase) ||
+                    parts[0].Equals("STAR",  StringComparison.OrdinalIgnoreCase))
+                    return true;
+
 
                 // Normal [MOD]: base name before ':' must exist as a declared block under MODS
                 var baseName = parts[0].Trim();
