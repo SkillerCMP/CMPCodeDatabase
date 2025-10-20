@@ -104,8 +104,6 @@ if (!collectorFallback.ContainsKey(name)) collectorFallback[name] = code;
 
         private void SelectMod(TreeNode node)
                 {
-            // Reset previous applied MOD labels to avoid accumulating "(...)"
-            ClearAppliedModNames(node);
 if (node == null) return;
 if (!GateOnAction(node)) return;
 
@@ -177,7 +175,30 @@ while (true)
         }
     }
     // 2) Simple list (value-name pairs)
-    else if (modDefinitions.ContainsKey(raw) || modDefinitions.ContainsKey(core))
+    
+    // ASCII HEX Amount branch — Amount:<base>:ASCII:(BIG|BE|LITTLE|LE[<Label>])
+    else if (TryParseTextAmountTagHex(raw, out var hBaseTxt, out var hEndian, out var hLabel) || TryParseTextAmountTagHex(core, out hBaseTxt, out hEndian, out hLabel))
+    {
+        bool little = hEndian.Equals("LITTLE", StringComparison.OrdinalIgnoreCase);
+        string titleLabel = little ? "ASCII LITTLE" : "ASCII BIG";
+        if (!string.IsNullOrWhiteSpace(hLabel)) titleLabel += $" <{hLabel}>";
+
+        using (var dlg = new AsciiHexAmountDialog(little, titleLabel, hBaseTxt, (!string.IsNullOrEmpty(hBaseTxt)) ? (int?)hBaseTxt.Length : null))
+        {
+            if (dlg.ShowDialog(this) != DialogResult.OK) break;
+            var hex = dlg.ResultHex ?? string.Empty;
+
+            // Replace placeholder with hex bytes
+            tpl = tpl.Substring(0, s0) + hex + tpl.Substring(e0 + 1);
+            node.Tag = tpl;
+            txtCodePreview.Text = tpl;
+            try { txtCodePreview.HideSelection = false; txtCodePreview.Select(s0, hex.Length); txtCodePreview.ScrollToCaret(); txtCodePreview.Update(); } catch { }
+
+            nextStart = s0 + hex.Length;
+            continue;
+        }
+    }
+else if (modDefinitions.ContainsKey(raw) || modDefinitions.ContainsKey(core))
     {
         var items = modDefinitions.ContainsKey(raw) ? modDefinitions[raw] : modDefinitions[core];
         using (var dd = new SimpleModDialog(core, items, $"{node.Text} — {core}"))
@@ -261,65 +282,7 @@ else if (TryParseTextAmountTag(raw, out var tBaseTxt, out var tEncToken) || TryP
             continue;
         }
     }
-    
-else if (TryParseJokerTag(raw, out var jPlat, out var jMods) || TryParseJokerTag(core, out jPlat, out jMods))
-{
-    // Open Joker controller dialog and insert 4-hex mask
-    using (var dlg = new CMPCodeDatabase.SpecialMods.JokerDialog(jPlat, new System.Collections.Generic.HashSet<string>(jMods)))
-    {
-        if (dlg.ShowDialog(this) != DialogResult.OK) break;
-        var v = dlg.ResultHex?.ToUpperInvariant() ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(v)) break;
-        // If token requested GC:LE, byte-swap
-        if (string.Equals(jPlat, "GC", StringComparison.OrdinalIgnoreCase) && jMods != null && jMods.Contains("LE"))
-        {
-            if (v.Length == 4) v = v.Substring(2,2) + v.Substring(0,2);
-        }
-
-        tpl = tpl.Substring(0, s0) + v + tpl.Substring(e0 + 1);
-        node.Tag = tpl;
-        txtCodePreview.Text = tpl;
-        try { txtCodePreview.HideSelection = false; txtCodePreview.Select(s0, v.Length); txtCodePreview.ScrollToCaret(); txtCodePreview.Update(); } catch { }
-
-        AppendAppliedModName(node, "Joker");
-        nextStart = s0 + v.Length;
-        continue;
-    }
-}
-
-    // STAR tag (Star Ocean: Till the End of Time — PS2)
-    else if (core.StartsWith("STAR", StringComparison.OrdinalIgnoreCase))
-    {
-        // Sub-type from tag: H4V / CH / LVL (default H4V)
-        string stype = "H4V";
-        var colon = raw.IndexOf(':');
-        if (colon >= 0 && colon + 1 < raw.Length)
-        {
-            var hint = raw.Substring(colon + 1).Trim();
-            if (!string.IsNullOrEmpty(hint)) stype = hint.ToUpperInvariant();
-        }
-
-        using (var dlg = new CMPCodeDatabase.SpecialMods.StarDialog(stype))
-        {
-            if (dlg.ShowDialog(this) != DialogResult.OK) break;
-            var hex = dlg.ResultHex?.ToUpperInvariant() ?? (stype == "LVL" ? "0000" : "00000000");
-            var label = dlg.ResultLabel ?? $"{stype}";
-
-            // Replace this tag instance with the computed value
-            tpl = tpl.Substring(0, s0) + hex + tpl.Substring(e0 + 1);
-            node.Tag = tpl;
-            txtCodePreview.Text = tpl;
-            try { txtCodePreview.HideSelection = false; txtCodePreview.Select(s0, hex.Length); txtCodePreview.ScrollToCaret(); txtCodePreview.Update(); } catch { }
-
-            // Append applied label like other mods (e.g., "(H4V 120)")
-            AppendAppliedModName(node, label);
-            node.Text = GetDisplayName(node);
-
-            nextStart = s0 + hex.Length;
-            continue;
-        }
-    }
-else
+    else
     {
         // Unknown tag type; stop the chain
         MessageBox.Show($"Unknown MOD tag: [{raw}]");
