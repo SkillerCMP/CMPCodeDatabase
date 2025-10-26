@@ -282,6 +282,63 @@ else if (TryParseTextAmountTag(raw, out var tBaseTxt, out var tEncToken) || TryP
             continue;
         }
     }
+    else if (TryParseJokerTag(raw, out var jPlat, out var jMods) || TryParseJokerTag(core, out jPlat, out jMods))
+    {
+        // Open Joker controller dialog and insert 4-hex mask
+        using (var dlg = new CMPCodeDatabase.SpecialMods.JokerDialog(jPlat, new System.Collections.Generic.HashSet<string>(jMods)))
+        {
+            if (dlg.ShowDialog(this) != DialogResult.OK) break;
+            var v = dlg.ResultHex?.ToUpperInvariant() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(v)) break;
+            // If token requested GC:LE, byte-swap
+            if (string.Equals(jPlat, "GC", StringComparison.OrdinalIgnoreCase) && jMods != null && jMods.Contains("LE"))
+            {
+                if (v.Length == 4) v = v.Substring(2,2) + v.Substring(0,2);
+            }
+
+            tpl = tpl.Substring(0, s0) + v + tpl.Substring(e0 + 1);
+            node.Tag = tpl;
+            txtCodePreview.Text = tpl;
+            try { txtCodePreview.HideSelection = false; txtCodePreview.ScrollToCaret(); txtCodePreview.Update(); } catch { }
+
+            AppendAppliedModName(node, "Joker");
+            nextStart = s0 + v.Length;
+            continue;
+        }
+    }
+
+    // STAR tag (Star Ocean: Till the End of Time — PS2)
+    else if (core.StartsWith("STAR", StringComparison.OrdinalIgnoreCase))
+    {
+        // Sub-type from tag: H4V / CH / LVL (default H4V)
+        string stype = "H4V";
+        var colon = raw.IndexOf(':');
+        if (colon >= 0 && colon + 1 < raw.Length)
+        {
+            var hint = raw.Substring(colon + 1).Trim();
+            if (!string.IsNullOrEmpty(hint)) stype = hint.ToUpperInvariant();
+        }
+
+        using (var dlg = new CMPCodeDatabase.SpecialMods.StarDialog(stype))
+        {
+            if (dlg.ShowDialog(this) != DialogResult.OK) break;
+            var hex = dlg.ResultHex?.ToUpperInvariant() ?? (stype == "LVL" ? "0000" : "00000000");
+            var label = dlg.ResultLabel ?? $"{stype}";
+
+            // Replace this tag instance with the computed value
+            tpl = tpl.Substring(0, s0) + hex + tpl.Substring(e0 + 1);
+            node.Tag = tpl;
+            txtCodePreview.Text = tpl;
+            try { txtCodePreview.HideSelection = false; txtCodePreview.ScrollToCaret(); txtCodePreview.Update(); } catch { }
+
+            // Append applied label like other mods (e.g., "(H4V 120)")
+            AppendAppliedModName(node, label);
+            node.Text = GetDisplayName(node);
+
+            nextStart = s0 + hex.Length;
+            continue;
+        }
+    }
     else
     {
         // Unknown tag type; stop the chain
