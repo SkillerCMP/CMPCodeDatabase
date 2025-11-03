@@ -88,6 +88,8 @@ this.Shown        += (_, __) => TreeViewExtent.UpdateHorizontalExtent(treeCodes)
 this.ResizeEnd    += (_, __) => TreeViewExtent.UpdateHorizontalExtent(treeCodes);
 
 treeCodes.FontChanged    += (_, __) => TreeViewExtent.UpdateHorizontalExtent(treeCodes);
+// NEW: auto-open group {{...}} notes on expand
+treeCodes.AfterExpand += TreeCodes_AfterExpand_ShowGroupNote;
 treeCodes.AfterExpand    += (_, __) => TreeViewExtent.UpdateHorizontalExtent(treeCodes);
 treeCodes.AfterCollapse  += (_, __) => TreeViewExtent.UpdateHorizontalExtent(treeCodes);
 

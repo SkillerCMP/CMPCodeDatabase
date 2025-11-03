@@ -243,29 +243,61 @@ TreeNode? currentGroup = null;
                                     currentGroup = currentGroup?.Parent;
                                 }
                                 else
-                                {
-                                    string rawGroup = line.Substring(1).Trim();
-                                    string groupName = rawGroup;
-                                    string? groupNote = null;
-                            
-                                    // Only treat as group-note if pattern contains ':{' (per spec: !..:{})
-                                    if (rawGroup.IndexOf(":{", StringComparison.Ordinal) >= 0)
-                                    {
-                                        int gs = rawGroup.IndexOf('{');
-                                        int ge = rawGroup.IndexOf('}');
-                                        if (gs >= 0 && ge > gs)
-                                        {
-                                            groupNote = UnescapeNote(rawGroup.Substring(gs + 1, ge - gs - 1).Trim());
-                                            groupName = rawGroup.Substring(0, gs).Trim();
-                                        }
-                                    }
-                            
-                                    TreeNode newGroup = new TreeNode(groupName);
-                                    (currentGroup ?? currentFileGroup ?? parentNode).Nodes.Add(newGroup);
-                                    originalNodeNames[newGroup] = groupName;
-                                    if (!string.IsNullOrEmpty(groupNote)) { nodeNotes[newGroup] = groupNote; newGroup.Text = GetDisplayName(newGroup); }
-                                    currentGroup = newGroup;
-                                }
+{
+    string rawGroup = line.Substring(1).Trim();
+    string groupName = rawGroup;
+    string? groupNote = null;
+    List<string>? popupNotes = null;
+
+    // Only treat as group-note if pattern contains ':{' (per spec: !..:{})
+    if (rawGroup.IndexOf(":{", StringComparison.Ordinal) >= 0)
+    {
+        // FIRST: look for popup-style {{ ... }}
+        int d1 = rawGroup.IndexOf("{{", StringComparison.Ordinal);
+        int d2 = (d1 >= 0) ? rawGroup.IndexOf("}}", d1 + 2, StringComparison.Ordinal) : -1;
+        if (d1 >= 0 && d2 > d1)
+        {
+            // popup note (auto-open)
+            string popup = UnescapeNote(rawGroup.Substring(d1 + 2, d2 - (d1 + 2)).Trim());
+            popupNotes = new List<string> { popup };
+            // strip the :{{...}} part out of the name
+            groupName = rawGroup.Substring(0, d1).Trim();
+        }
+        else
+        {
+            // OLD single-brace style { ... } -> stays as normal note
+            int gs = rawGroup.IndexOf('{');
+            int ge = rawGroup.IndexOf('}');
+            if (gs >= 0 && ge > gs)
+            {
+                groupNote = UnescapeNote(rawGroup.Substring(gs + 1, ge - gs - 1).Trim());
+                groupName = rawGroup.Substring(0, gs).Trim();
+            }
+        }
+    }
+
+    TreeNode newGroup = new TreeNode(groupName);
+    (currentGroup ?? currentFileGroup ?? parentNode).Nodes.Add(newGroup);
+    originalNodeNames[newGroup] = groupName;
+
+    if (popupNotes != null)
+    {
+        if (!nodePopupNotes.ContainsKey(newGroup))
+            nodePopupNotes[newGroup] = new List<string>();
+        // add all popup notes we found (usually 1)
+        foreach (var p in popupNotes)
+            nodePopupNotes[newGroup].Add(p);
+        newGroup.Text = GetDisplayName(newGroup);
+    }
+    else if (!string.IsNullOrEmpty(groupNote))
+    {
+        // single-brace { ... } stays as normal note
+        nodeNotes[newGroup] = groupNote;
+        newGroup.Text = GetDisplayName(newGroup);
+    }
+
+    currentGroup = newGroup;
+}
                             }
                             else if (line.StartsWith("["))
                             {
