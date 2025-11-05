@@ -30,23 +30,25 @@ namespace CMPCodeDatabase
 
             foreach (Match m in Regex.Matches(codeBody, @"\[(?<inner>[^\]]+)\]"))
             {
-                var inner = m.Groups["inner"].Value.Trim();
-                if (inner.Length == 0) continue;
+              var inner = m.Groups["inner"].Value.Trim();
+if (inner.Length == 0) continue;
 
-                var parts = inner.Split(':');
+var parts = inner.Split(':');                 // declare parts first
+var nameOnly = parts[0].Split('<')[0].Trim(); // THEN compute nameOnly
+
 
                 // Special [MOD]: [Amount:…:…:…] (case-insensitive)
-                if (parts.Length == 4 && parts[0].Equals("Amount", StringComparison.OrdinalIgnoreCase))
+                if (parts.Length == 4 && nameOnly.Equals("Amount", StringComparison.OrdinalIgnoreCase))
                     return true;
                 // Treat Joker / JKR / STAR like Amount — always show -M-
-                if (parts[0].Equals("Joker", StringComparison.OrdinalIgnoreCase) ||
-                    parts[0].Equals("JKR",   StringComparison.OrdinalIgnoreCase) ||
-                    parts[0].Equals("STAR",  StringComparison.OrdinalIgnoreCase))
+                 if (nameOnly.Equals("Joker", StringComparison.OrdinalIgnoreCase) ||
+     nameOnly.Equals("JKR",   StringComparison.OrdinalIgnoreCase) ||
+     nameOnly.Equals("STAR",  StringComparison.OrdinalIgnoreCase))
                     return true;
 
 
                 // Normal [MOD]: base name before ':' must exist as a declared block under MODS
-                var baseName = parts[0].Trim();
+                var baseName = nameOnly;
                 if (baseName.Length > 0 && availableModNames.Contains(baseName))
                     return true;
             }

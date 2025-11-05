@@ -578,13 +578,14 @@ Text = caption;
                 private TextBox txtFilter = new TextBox() { Dock = DockStyle.Top, PlaceholderText = "Filter..." };
                 private DataGridView grid = new DataGridView() { Dock = DockStyle.Fill, ReadOnly = true, SelectionMode = DataGridViewSelectionMode.FullRowSelect, MultiSelect = false, AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill };
                 private Button ok = new Button() { Text = "OK", Dock = DockStyle.Bottom };
-                private List<string[]> allRows;
+                private CheckBox chkSwapBytes = new CheckBox() { Text = "Swap bytes (e.g., 2710 → 1027)", Dock = DockStyle.Bottom, AutoSize = true };
+				private List<string[]> allRows;
                 private List<string> headers;
                 public string? SelectedValue { get; private set; }
                 public string? SelectedDisplay { get; private set; }
 
         
-                public ModGridDialog(string tag, List<string> headers, List<string[]> rows)
+				public ModGridDialog(string tag, List<string> headers, List<string[]> rows, bool initialSwap = false)
                 {
                     Text = $"Select {tag}";
                     Width = 680; Height = 420; StartPosition = FormStartPosition.CenterParent;
@@ -604,9 +605,11 @@ Text = caption;
                     grid.CellDoubleClick += (s, e) => { TakeSelection(); };
 
                     Controls.Add(grid);
+					Controls.Add(chkSwapBytes);                  // NEW: For ByteSwap
                     Controls.Add(ok);
                     Controls.Add(txtFilter);
                     AcceptButton = ok;
+					chkSwapBytes.Checked = initialSwap;   // auto-check from <*...> rule
                 }
 
                 public ModGridDialog(string tag, List<string> headers, List<string[]> rows, string titleOverride)
@@ -643,10 +646,26 @@ Text = caption;
                         for (int i = 0; i < headers.Count; i++) parts[i] = grid.CurrentRow.Cells[i].Value?.ToString() ?? "";
                         // First column acts as VALUE; Display is concatenation "VAL | NAME | ..."
                         SelectedValue = parts.Length > 0 ? parts[0] : "";
+						if (chkSwapBytes.Checked)
+    SelectedValue = SwapBytes(SelectedValue ?? string.Empty);
                         SelectedDisplay = string.Join(" | ", parts.Skip(1).Where(s => !string.IsNullOrWhiteSpace(s)));
                         DialogResult = DialogResult.OK;
                     }
                 }
+				private static string SwapBytes(string hex)
+{
+    if (string.IsNullOrWhiteSpace(hex)) return string.Empty;
+    // remove spaces
+    var clean = System.Text.RegularExpressions.Regex.Replace(hex, @"\s+", "");
+    // pad to even length
+    if ((clean.Length & 1) == 1) clean = "0" + clean;
+    // split into bytes and reverse order
+    var bytes = new string[clean.Length / 2];
+    for (int i = 0; i < bytes.Length; i++)
+        bytes[i] = clean.Substring(i * 2, 2);
+    System.Array.Reverse(bytes);
+    return string.Concat(bytes);
+}
             }
 
             // --------- Enhanced Calculator ---------

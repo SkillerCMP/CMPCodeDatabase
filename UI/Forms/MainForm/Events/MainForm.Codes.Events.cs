@@ -155,7 +155,7 @@ while (true)
         var headers = modHeaders.ContainsKey(raw) ? modHeaders[raw] : modHeaders[core];
         var rows    = modRows.ContainsKey(raw)    ? modRows[raw]    : modRows[core];
 
-        using (var gd = new ModGridDialog(raw, headers, rows))
+        using (var gd = new ModGridDialog(raw, headers, rows, HasStarAfterAngle(raw)))
         {
             if (gd.ShowDialog(this) != DialogResult.OK) break; // stop chain on cancel
             var chosen = gd.SelectedValue ?? string.Empty;
@@ -350,6 +350,22 @@ else if (TryParseTextAmountTag(raw, out var tBaseTxt, out var tEncToken) || TryP
 // Update display name after batch
 ClearModHighlight();
     node.Text = GetDisplayName(node);
+}
+private static bool HasStarAfterAngle(string rawTag)
+{
+    if (string.IsNullOrEmpty(rawTag)) return false;
+
+    int lt = rawTag.IndexOf('<');            // only look inside the tag itself
+    if (lt < 0) return false;
+
+    int gt = rawTag.IndexOf('>', lt + 1);
+    if (gt < 0) return false;
+
+    // first non-space char after '<' must be '*'
+    int i = lt + 1;
+    while (i < gt && char.IsWhiteSpace(rawTag[i])) i++;
+
+    return (i < gt) && rawTag[i] == '*';
 }
 }
 
