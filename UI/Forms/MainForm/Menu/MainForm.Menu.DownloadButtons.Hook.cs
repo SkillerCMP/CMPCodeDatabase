@@ -22,6 +22,7 @@ namespace CMPCodeDatabase
         {
             base.OnShown(e);
             try { EnsureDownloadButtons(); } catch { /* no-op if method missing */ }
+			try { WireTreeCheckCascade(); } catch {}
         }
     }
 }

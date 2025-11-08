@@ -120,19 +120,6 @@ namespace CMPCodeDatabase
             btnPatchRunAll.Click          += (s, e) => RunPatch(onlyChecked: false);
             btnPatchPreviewSelected.Click += (s, e) => PreviewPatch(onlyChecked: true);
 
-            // Keyboard shortcuts
-            KeyPreview = true;
-            KeyDown += (s, e) =>
-            {
-                if (e.Control && e.KeyCode == Keys.A) { SetAllChecked(true); e.SuppressKeyPress = true; }
-                else if (e.Control && e.Shift && e.KeyCode == Keys.A) { SetAllChecked(false); e.SuppressKeyPress = true; }
-                else if (e.Control && e.KeyCode == Keys.C) { CopyChecked(); e.SuppressKeyPress = true; }
-                else if (e.Control && e.Shift && e.KeyCode == Keys.C) { CopyAll(); e.SuppressKeyPress = true; }
-                else if (e.Control && e.KeyCode == Keys.R) { RunPatch(onlyChecked: true); e.SuppressKeyPress = true; }
-                else if (e.Control && e.Shift && e.KeyCode == Keys.R) { RunPatch(onlyChecked: false); e.SuppressKeyPress = true; }
-                else if (e.Control && e.KeyCode == Keys.P) { PreviewPatch(onlyChecked: true); e.SuppressKeyPress = true; }
-            };
-
             // Compose
             var buttonsFlow = new FlowLayoutPanel
             {

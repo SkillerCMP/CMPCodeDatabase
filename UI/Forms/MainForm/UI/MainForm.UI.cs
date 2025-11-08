@@ -26,6 +26,9 @@ namespace CMPCodeDatabase
 
                     // View menu with Collector + Calculator
                     var viewMenu = new ToolStripMenuItem("View");
+var dbStatsItem = new ToolStripMenuItem("Database Stats…") { Name = "menuDatabaseStats" };
+dbStatsItem.Click += (s, e) => ShowDatabaseStatsWindow();
+viewMenu.DropDownItems.Add(dbStatsItem);
 
                     var collectorItem = new ToolStripMenuItem("Collector");
                     collectorItem.ShortcutKeys = Keys.Control | Keys.L;

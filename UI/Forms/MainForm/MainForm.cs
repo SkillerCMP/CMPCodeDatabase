@@ -75,7 +75,7 @@ namespace CMPCodeDatabase
                 // Collector & Calculator windows
                 private CollectorForm? collectorWindow;
                 private EnhancedCalculatorForm? calculatorWindow;
-
+private Form? databaseStatsWindow;
                 // Fallback collector storage when collector window is closed
                 private readonly Dictionary<string, string> collectorFallback = new();
 

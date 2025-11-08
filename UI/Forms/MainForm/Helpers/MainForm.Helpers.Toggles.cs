@@ -26,12 +26,26 @@ namespace CMPCodeDatabase
                         }
 
         private void ToggleCalculatorWindow()
-                        {
-                            if (calculatorWindow == null || calculatorWindow.IsDisposed)
-                            {
-                                calculatorWindow = new EnhancedCalculatorForm();
-                            }
-                            if (calculatorWindow.Visible) calculatorWindow.Hide(); else calculatorWindow.Show(this);
-                        }
-    }
+        {
+            if (calculatorWindow == null || calculatorWindow.IsDisposed)
+            {
+                calculatorWindow = new EnhancedCalculatorForm();
+            }
+            if (calculatorWindow.Visible) calculatorWindow.Hide(); else calculatorWindow.Show(this);
+        }
+
+        private void ShowDatabaseStatsWindow()
+        {
+            if (databaseStatsWindow == null || databaseStatsWindow.IsDisposed)
+{
+    var rootPath = _dbSelectedPath ?? string.Empty;   // from FilesRoot partial
+    databaseStatsWindow = new DatabaseStatsForm(rootPath);
 }
+
+            if (!databaseStatsWindow.Visible) databaseStatsWindow.Show(this);
+            if (databaseStatsWindow.WindowState == FormWindowState.Minimized)
+                databaseStatsWindow.WindowState = FormWindowState.Normal;
+            databaseStatsWindow.BringToFront();
+        }
+    }   // ← closes class MainForm
+}       // ← closes namespace

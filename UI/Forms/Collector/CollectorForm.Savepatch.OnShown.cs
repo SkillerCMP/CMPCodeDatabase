@@ -27,6 +27,7 @@ namespace CMPCodeDatabase
             catch { }
         
             try { ApplyFixedCollectorSizing(); } catch { }
+			try { EnsureShortcuts_SHORT(); EnsureOpsMenu_MENU(); } catch {}
         }
     }
 }
