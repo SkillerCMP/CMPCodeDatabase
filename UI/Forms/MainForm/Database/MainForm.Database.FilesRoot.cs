@@ -155,6 +155,7 @@ namespace CMPCodeDatabase
             // Clear codes panel
             treeCodes.Nodes.Clear();
             txtCodePreview.Clear();
+			try { NotifyCodesTreeRebuilt_REFRESH(); } catch { }
         }
 
         private void TreeGames_AfterSelect_FilesRoot(object? sender, TreeViewEventArgs e)
@@ -201,7 +202,7 @@ treeCodes.Nodes.Clear();
             txtCodePreview.Clear();
             treeCodes.EndUpdate();
             TreeViewExtent.UpdateHorizontalExtent(treeCodes);
-            
+            try { NotifyCodesTreeRebuilt_REFRESH(); } catch { }
         }
 
         /// <summary>

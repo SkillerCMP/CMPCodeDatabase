@@ -65,7 +65,8 @@ namespace CMPCodeDatabase
             {
                 sfd.Title = "Export PCSX2 .pnach";
                 sfd.Filter = "PCSX2 Patch (*.pnach)|*.pnach|All files (*.*)|*.*";
-                sfd.FileName = GuessPnachFileName(entries) ?? "CMPCollector.pnach";
+                var prefer = GetPreferredPnachDefaultFileName_META(); // from CollectorForm.Tools.ELFCRC.cs
+				sfd.FileName = prefer ?? GuessPnachFileName(entries) ?? "CMPDBCollector.pnach";
                 if (sfd.ShowDialog(this) == DialogResult.OK)
                 {
                     try { File.WriteAllText(sfd.FileName, content, new UTF8Encoding(false)); }
@@ -92,7 +93,7 @@ namespace CMPCodeDatabase
             {
                 sfd.Title = "Export Apollo .savepatch";
                 sfd.Filter = "Apollo Savepatch (*.savepatch)|*.savepatch|All files (*.*)|*.*";
-                sfd.FileName = "CMPCollector.savepatch";
+                sfd.FileName = "CMPDBCollector.savepatch";
                 if (sfd.ShowDialog(this) == DialogResult.OK)
                 {
                     try { File.WriteAllText(sfd.FileName, content, new UTF8Encoding(false)); }
@@ -187,7 +188,9 @@ namespace CMPCodeDatabase
             // Write a temp file for preview/export
             var dir = Path.Combine(Path.GetTempPath(), "CMPCollector");
             Directory.CreateDirectory(dir);
-            var name = GuessPnachFileName(entries) ?? "CollectorPatch_TMP.pnach";
+            var name = GetPreferredPnachDefaultFileName_META() 
+			?? GuessPnachFileName(entries) 
+			?? "CollectorPatch_TMP.pnach";
             var outPath = Path.Combine(dir, name);
             File.WriteAllText(outPath, content, new UTF8Encoding(false));
             return outPath;

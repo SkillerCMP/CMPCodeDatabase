@@ -57,6 +57,7 @@ namespace CMPCodeDatabase
                     txtCodePreview.Clear();
 					treeCodes.EndUpdate();
 TreeViewExtent.UpdateHorizontalExtent(treeCodes);
+try { NotifyCodesTreeRebuilt_REFRESH(); } catch { }
                 }
 
         private void TreeGames_AfterSelect(object? sender, TreeViewEventArgs e)
@@ -106,6 +107,7 @@ TreeViewExtent.UpdateHorizontalExtent(treeCodes);
                     txtCodePreview.Clear();
 					treeCodes.EndUpdate();
     TreeViewExtent.UpdateHorizontalExtent(treeCodes);
+	try { NotifyCodesTreeRebuilt_REFRESH(); } catch { }
                 }
 
         private void BuildTreeFromFolder(string currentFolder, TreeNode? parentNode)
