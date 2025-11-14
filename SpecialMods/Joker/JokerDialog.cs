@@ -15,6 +15,7 @@ namespace CMPCodeDatabase.SpecialMods
         private GroupBox grpWiiLayout;
         private RadioButton rbWiimote;
         private RadioButton rbClassic;
+        private RadioButton rbWiiGC;
         private Button btnInsert, btnCancel;
 
         private HashSet<string> pressed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -45,12 +46,15 @@ namespace CMPCodeDatabase.SpecialMods
 
             lblPreview = new Label { Left = 300, Top = 14, Width = 200, Text = "Value: 0000", Font = new Font(FontFamily.GenericSansSerif, 10, FontStyle.Bold) };
 
-            grpWiiLayout = new GroupBox { Left = 12, Top = 44, Width = 220, Height = 52, Text = "Wii Layout" };
+            // Wii layout selector (Classic / Wiimote / GameCube)
+            grpWiiLayout = new GroupBox { Left = 12, Top = 44, Width = 360, Height = 52, Text = "Wii Layout" };
             rbWiimote = new RadioButton { Left = 12, Top = 22, Width = 90, Text = "Wiimote", Checked = true };
             rbClassic = new RadioButton { Left = 120, Top = 22, Width = 80, Text = "Classic" };
-            rbWiimote.CheckedChanged += (s, e) => { if (cmbPlatform.Text == "Wii") UpdatePreview(); };
-            rbClassic.CheckedChanged += (s, e) => { if (cmbPlatform.Text == "Wii") UpdatePreview(); };
-            grpWiiLayout.Controls.AddRange(new Control[] { rbWiimote, rbClassic });
+            rbWiiGC   = new RadioButton { Left = 220, Top = 22, Width = 110, Text = "GameCube" };
+            rbWiimote.CheckedChanged += (s, e) => { if (IsWii(cmbPlatform.Text)) RebuildButtons(); };
+            rbClassic.CheckedChanged += (s, e) => { if (IsWii(cmbPlatform.Text)) RebuildButtons(); };
+            rbWiiGC.CheckedChanged   += (s, e) => { if (IsWii(cmbPlatform.Text)) RebuildButtons(); };
+            grpWiiLayout.Controls.AddRange(new Control[] { rbWiimote, rbClassic, rbWiiGC });
             grpWiiLayout.Visible = false;
 
             pnlButtons = new Panel { Left = 12, Top = 104, Width = 496, Height = 272, BorderStyle = BorderStyle.FixedSingle, AutoScroll = true };
@@ -62,27 +66,46 @@ namespace CMPCodeDatabase.SpecialMods
 
             Controls.AddRange(new Control[] { cmbPlatform, chkReverse, lblPreview, grpWiiLayout, pnlButtons, btnInsert, btnCancel });
 
-            // init selection
+            // init selection (case-insensitive so "WII" selects "Wii")
             var platToShow = platLocked ? initialPlat : "PS2";
-            cmbPlatform.SelectedItem = platToShow;
+            SelectComboItemInsensitive(cmbPlatform, platToShow);
             cmbPlatform.Enabled = !platLocked; // only ALL lets user change platform
 
             if (mods != null)
             {
                 if (mods.Contains("REVERSE")) chkReverse.Checked = true;
-                if (mods.Contains("CLASSIC")) { rbClassic.Checked = true; rbWiimote.Checked = false; }
-                if (mods.Contains("WIIMOTE")) { rbWiimote.Checked = true; rbClassic.Checked = false; }
+                if (mods.Contains("CLASSIC")) { rbClassic.Checked = true; rbWiimote.Checked = false; rbWiiGC.Checked = false; }
+                if (mods.Contains("WIIMOTE")) { rbWiimote.Checked = true; rbClassic.Checked = false; rbWiiGC.Checked = false; }
             }
 
             RebuildButtons();
             UpdatePreview();
         }
 
+        // --- helper: safely select item ignoring case
+        private static void SelectComboItemInsensitive(ComboBox cb, string value)
+        {
+            if (cb == null || cb.Items.Count == 0) return;
+            foreach (var item in cb.Items)
+            {
+                if (string.Equals(item?.ToString(), value, StringComparison.OrdinalIgnoreCase))
+                {
+                    cb.SelectedItem = item;
+                    return;
+                }
+            }
+            // fallback
+            if (cb.Items.Contains("PS2")) cb.SelectedItem = "PS2";
+            else cb.SelectedIndex = 0;
+        }
+
         private void RebuildButtons()
         {
             pressed.Clear();
             pnlButtons.Controls.Clear();
-            grpWiiLayout.Visible = (cmbPlatform.Text == "Wii");
+
+            // case-insensitive Wii visibility
+            grpWiiLayout.Visible = IsWii(cmbPlatform.Text);
 
             string plat = cmbPlatform.Text;
             var groups = GetGroupsFor(plat);
@@ -115,18 +138,23 @@ namespace CMPCodeDatabase.SpecialMods
             bool reverse = chkReverse.Checked;
             string value = "0000";
 
-            if (plat == "PS2")
+            if (IsPS2(plat))
                 value = JokerCalculator.MaskPS2(pressed, reverse);
-            else if (plat == "GC")
+            else if (IsGC(plat))
                 value = JokerCalculator.MaskGC_BE(pressed);
-            else if (plat == "Wii")
-                value = rbClassic.Checked ? JokerCalculator.MaskWii_Classic(pressed, reverse)
-                                          : JokerCalculator.MaskWii_Wiimote(pressed, reverse);
-            else if (plat == "GBA")
+            else if (IsWii(plat))
+            {
+                if (rbWiiGC.Checked)
+                    value = JokerCalculator.MaskGC_BE(pressed); // Wii with a GC controller uses GC mask
+                else
+                    value = rbClassic.Checked ? JokerCalculator.MaskWii_Classic(pressed, reverse)
+                                              : JokerCalculator.MaskWii_Wiimote(pressed, reverse);
+            }
+            else if (IsGBA(plat))
                 value = JokerCalculator.MaskGBA(pressed);
 
             ResultHex = value.ToUpperInvariant();
-            ResultPressLabel = BuildPressLabel(plat, pressed);
+            ResultPressLabel = BuildPressLabel(plat);
             lblPreview.Text = $"Value: {ResultHex}";
         }
 
@@ -134,30 +162,29 @@ namespace CMPCodeDatabase.SpecialMods
             string.IsNullOrWhiteSpace(s) ? s : char.ToUpperInvariant(s[0]) + s.Substring(1).ToLowerInvariant();
 
         // Produce "Press Select+Start" style label in a stable order per platform
-        private string BuildPressLabel(string plat, HashSet<string> p)
+        private string BuildPressLabel(string plat)
         {
-            var order = new List<string>();
-            if (plat == "PS2" || plat == "GBA")
+            IEnumerable<string> order;
+            if (IsPS2(plat) || IsGBA(plat))
             {
-                order.AddRange(new []{ "SELECT","START","L3","R3","UP","RIGHT","DOWN","LEFT","L2","R2","L1","R1","TRIANGLE","CIRCLE","X","SQUARE","A","B","R","L" });
+                order = new []{ "SELECT","START","L3","R3","UP","RIGHT","DOWN","LEFT","L2","R2","L1","R1","TRIANGLE","CIRCLE","X","SQUARE","A","B","R","L" };
             }
-            else if (plat == "GC")
+            else if (IsGC(plat) || (IsWii(plat) && rbWiiGC.Checked))
             {
-                order.AddRange(new []{ "START","A","B","X","Y","Z","R","L","LEFT","RIGHT","DOWN","UP" });
+                order = new []{ "START","A","B","X","Y","Z","R","L","LEFT","RIGHT","DOWN","UP" };
             }
-            else if (plat == "Wii")
+            else if (IsWii(plat))
             {
-                if (rbClassic.Checked)
-                    order.AddRange(new []{ "SUB","PLUS","L","R","ZL","ZR","A","B","X","Y","UP","LEFT","DOWN","RIGHT" });
-                else
-                    order.AddRange(new []{ "HOME","MINUS","PLUS","C","Z","A","B","ONE","TWO","LEFT","RIGHT","DOWN","UP" });
+                order = rbClassic.Checked
+                    ? new []{ "SUB","PLUS","L","R","ZL","ZR","A","B","X","Y","UP","LEFT","DOWN","RIGHT" }
+                    : new []{ "HOME","MINUS","PLUS","C","Z","A","B","ONE","TWO","LEFT","RIGHT","DOWN","UP" };
             }
             else // fallback
             {
-                order.AddRange(p);
+                order = pressed;
             }
 
-            var picked = order.Where(x => p.Contains(x)).Select(TitleCase);
+            var picked = order.Where(x => pressed.Contains(x)).Select(TitleCase);
             var joined = string.Join("+", picked);
             if (string.IsNullOrEmpty(joined)) joined = "Buttons";
             return "Press " + joined;
@@ -165,7 +192,7 @@ namespace CMPCodeDatabase.SpecialMods
 
         private (string name, string[] buttons)[] GetGroupsFor(string plat)
         {
-            if (plat == "PS2")
+            if (IsPS2(plat))
             {
                 return new[]
                 {
@@ -175,7 +202,7 @@ namespace CMPCodeDatabase.SpecialMods
                     ("System",  new []{"Select","L3","R3","Start"}),
                 };
             }
-            if (plat == "GC")
+            if (IsGC(plat) || (IsWii(plat) && rbWiiGC.Checked))
             {
                 return new[]
                 {
@@ -185,7 +212,7 @@ namespace CMPCodeDatabase.SpecialMods
                     ("D-Pad",   new []{"Left","Right","Down","Up"}),
                 };
             }
-            if (plat == "Wii")
+            if (IsWii(plat))
             {
                 if (rbClassic.Checked)
                 {
@@ -216,5 +243,11 @@ namespace CMPCodeDatabase.SpecialMods
                 ("Shoulder",new []{"R","L"}),
             };
         }
+
+        // --- tiny helpers for case-insensitive platform checks ---
+        private static bool IsPS2(string s) => string.Equals(s, "PS2", StringComparison.OrdinalIgnoreCase);
+        private static bool IsGC(string s)  => string.Equals(s, "GC",  StringComparison.OrdinalIgnoreCase);
+        private static bool IsWii(string s) => string.Equals(s, "Wii", StringComparison.OrdinalIgnoreCase);
+        private static bool IsGBA(string s) => string.Equals(s, "GBA", StringComparison.OrdinalIgnoreCase);
     }
 }

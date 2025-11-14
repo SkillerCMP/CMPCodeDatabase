@@ -30,7 +30,7 @@ namespace CMPCodeDatabase
             if (parts.Length == 0) return false;
 
             var p0 = parts[0].ToUpperInvariant();
-            if (p0 != "PS2" && p0 != "GC" && p0 != "WII" && p0 != "GBA") return false;
+            if (p0 != "PS2" && p0 != "GC" && p0 != "WII" && p0 != "GBA" && p0 != "ALL") return false;
 
             platform = p0;
             mods = parts.Skip(1).Select(s => s.ToUpperInvariant()).ToArray();

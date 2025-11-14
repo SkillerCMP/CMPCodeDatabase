@@ -36,7 +36,7 @@ namespace CMPCodeDatabase
                     bool enabled = false;
                     if (node?.Tag is string tpl && !string.IsNullOrEmpty(tpl))
                     {
-                        enabled = Regex.IsMatch(tpl, @"\[(?:Joker|JKR):(?:(?:PS2|GC|Wii|GBA))(?:\:[^\]]+)?\]", RegexOptions.IgnoreCase);
+                        enabled = Regex.IsMatch(tpl, @"\[(?:Joker|JKR):(?:(?:PS2|GC|Wii|GBA|ALL))(?:\:[^\]]+)?\]", RegexOptions.IgnoreCase);
                     }
                     mi.Enabled = enabled;
                 };
@@ -52,7 +52,7 @@ namespace CMPCodeDatabase
             int caret = txtCodePreview?.SelectionStart ?? 0;
 
             // Find nearest [Joker:*] around caret; else first occurrence
-            var rx = new Regex(@"\[(?:Joker|JKR):(?<plat>PS2|GC|Wii|GBA)(?::(?<mods>[^\]]+))?\]", RegexOptions.IgnoreCase);
+            var rx = new Regex(@"\[(?:Joker|JKR):(?<plat>PS2|GC|Wii|GBA|ALL)(?::(?<mods>[^\]]+))?\]", RegexOptions.IgnoreCase);
             var matches = rx.Matches(tpl).Cast<Match>().ToList();
             if (matches.Count == 0) return;
 

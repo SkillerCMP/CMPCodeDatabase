@@ -26,6 +26,8 @@ namespace CMPCodeDatabase.Formatters
     {
         private static readonly Regex OnlyHexAndWhitespace = new Regex(@"^(?:\s|[0-9A-Fa-f])+$", RegexOptions.Compiled);
         private static readonly Regex HexToken8 = new Regex(@"[0-9A-Fa-f]{8}", RegexOptions.Compiled);
+        // Reflow threshold: only reformat when there are at least two 32-bit words
+        private const int MinWordsForReflow = 2;
 
         public static string NormalizeSwBlocksForCollector(string text)
         {
@@ -39,21 +41,43 @@ namespace CMPCodeDatabase.Formatters
             {
                 string line = lines[i];
                 string trimmed = line.Trim();
-
                 // Only operate on lines that are purely hex/whitespace and contain at least one 8-hex token
                 if (trimmed.Length > 0 && OnlyHexAndWhitespace.IsMatch(trimmed))
                 {
                     var matches = HexToken8.Matches(trimmed);
                     if (matches.Count > 0)
                     {
-                        // Reflow: two tokens per output line: "XXXXXXXX YYYYYYYY"
-                        for (int t = 0; t < matches.Count; t += 2)
+                        // Generic two-column reflow with partial-word padding, only when >= 2 dwords.
+                        // Steps:
+                        // 1) join all hex (strip spaces), 2) pad final partial to 8 hex,
+                        // 3) split into 8-hex words, 4) if odd word count, add filler 00000000,
+                        // 5) print two words per line.
+                        string clean = Regex.Replace(trimmed, @"\s+", "").ToUpperInvariant();
+                        if (clean.Length > 0)
                         {
-                            string left = matches[t].Value.ToUpperInvariant();
-                            string right = (t + 1 < matches.Count) ? matches[t + 1].Value.ToUpperInvariant() : "00000000";
-                            sb.Append(left).Append(' ').Append(right).Append('\n');
+                            var words = new System.Collections.Generic.List<string>();
+                            for (int p = 0; p < clean.Length; p += 8)
+                            {
+                                int remain = Math.Min(8, clean.Length - p);
+                                string w = clean.Substring(p, remain);
+                                if (remain < 8) w = w + new string('0', 8 - remain); // keep trailing partial (e.g., 426F78 -> 426F7800)
+                                words.Add(w);
+                            }
+
+                            // Only reformat when there are at least two full 8-hex tokens (pre-padding)
+                            if (matches.Count >= MinWordsForReflow)
+                            {
+                                if ((words.Count % 2) != 0) words.Add("00000000"); // keep continuation rows two-wide
+                                for (int k = 0; k < words.Count; k += 2)
+                                    sb.Append(words[k]).Append(' ').Append(words[k + 1]).Append('\n');
+                                continue;
+                            }
                         }
+
+                        // Below-threshold (single dword or less): keep the original line verbatim
+                        sb.Append(line).Append('\n');
                         continue;
+
                     }
                 }
 
