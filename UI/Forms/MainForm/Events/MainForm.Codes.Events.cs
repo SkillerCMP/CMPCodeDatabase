@@ -47,7 +47,7 @@ namespace CMPCodeDatabase
             string name = GetCopyName(node);
 			string groupPath = GetGroupPath(node);
 		if (!string.IsNullOrWhiteSpace(groupPath))
-			name = groupPath + " / " + name;
+			name = groupPath + "\\" + name;
             string raw = node.Tag?.ToString() ?? string.Empty;
             if (HasUnresolvedPlaceholders(raw))
             {
