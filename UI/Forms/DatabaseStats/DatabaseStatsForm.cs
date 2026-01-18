@@ -58,6 +58,7 @@ namespace CMPCodeDatabase
             }
 
             int totalCodes = 0;
+			int totalGameFiles = 0; // <— NEW: total files scanned (“unstacked” total games)
             var gameNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             // Totals per-name, and per-role per-name
@@ -66,7 +67,8 @@ namespace CMPCodeDatabase
 
             foreach (var file in Directory.EnumerateFiles(_dbRoot, "*.txt", SearchOption.AllDirectories))
             {
-                bool foundNameInFile = false;
+                totalGameFiles++; // <— NEW
+				bool foundNameInFile = false;
                 try
                 {
                     foreach (var raw in File.ReadLines(file))
@@ -152,7 +154,7 @@ namespace CMPCodeDatabase
             }
 
             // Totals label
-            _lblTotals.Text = $"Full Database — Total Codes: {totalCodes:N0}    Total Games: {gameNames.Count:N0}";
+            _lblTotals.Text = $"Full Database — Total Codes: {totalCodes:N0}    Total Unique Games: {gameNames.Count:N0} / {totalGameFiles:N0} :Total Games";
 
             // Determine the maximum number of role-pairs any single person has
             int maxPairs = rolesByName.Count == 0 ? 1 : rolesByName.Max(kv => kv.Value.Count);

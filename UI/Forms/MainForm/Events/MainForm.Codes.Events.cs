@@ -285,6 +285,21 @@ else if (TryParseTextAmountTag(raw, out var tBaseTxt, out var tEncToken) || TryP
             continue;
         }
     }
+	else if (CMPCodeDatabase.SpecialMods.TimeStampMod.TryResolveEpoch(this, raw, out var eHex, out var eLabel)
+      || CMPCodeDatabase.SpecialMods.TimeStampMod.TryResolveEpoch(this, core, out eHex, out eLabel))
+{
+    if (string.IsNullOrWhiteSpace(eHex)) break; // user canceled or error
+
+    tpl = tpl.Substring(0, s0) + eHex + tpl.Substring(e0 + 1);
+    node.Tag = tpl;
+    txtCodePreview.Text = tpl;
+    try { txtCodePreview.HideSelection = false; txtCodePreview.ScrollToCaret(); txtCodePreview.Update(); } catch { }
+
+    if (!string.IsNullOrWhiteSpace(eLabel)) AppendAppliedModName(node, eLabel);
+
+    nextStart = s0 + eHex.Length;
+    continue;
+}
     else if (TryParseJokerTag(raw, out var jPlat, out var jMods) || TryParseJokerTag(core, out jPlat, out jMods))
     {
         // Open Joker controller dialog and insert 4-hex mask

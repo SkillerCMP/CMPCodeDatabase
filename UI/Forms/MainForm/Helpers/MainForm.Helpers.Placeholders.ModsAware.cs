@@ -55,6 +55,7 @@ namespace CMPCodeDatabase
                 if (string.Equals(baseName, "Amount", StringComparison.OrdinalIgnoreCase)) return true;
                 if (string.Equals(baseName, "Joker", StringComparison.OrdinalIgnoreCase))  return true;
                 if (string.Equals(baseName, "STAR", StringComparison.OrdinalIgnoreCase))   return true;
+				if (string.Equals(baseName, "EPOCH", StringComparison.OrdinalIgnoreCase))  return true;
 
                 if (!IsIdentifier(baseName)) continue;
 
