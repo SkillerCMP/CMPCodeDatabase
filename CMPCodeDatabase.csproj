@@ -9,9 +9,9 @@
     <AssemblyName>CMPCodeDatabase</AssemblyName>
     <RootNamespace>CMPCodeDatabase</RootNamespace>
 	<ApplicationIcon>CMPCodeDatabase_square.ico</ApplicationIcon>
-  <Version>1.06.3</Version>
-  <FileVersion>1.0.6.3</FileVersion>
-  <AssemblyVersion>1.0.6.3</AssemblyVersion>
-  <InformationalVersion>1.06.3</InformationalVersion>
+  <Version>1.06.4</Version>
+  <FileVersion>1.0.6.4</FileVersion>
+  <AssemblyVersion>1.0.6.4</AssemblyVersion>
+  <InformationalVersion>1.06.4</InformationalVersion>
   </PropertyGroup>
 </Project>

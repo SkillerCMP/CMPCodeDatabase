@@ -1,15 +1,3 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// CMPCodeDatabase — File: UI/Forms/Settings/SettingsForm.cs
-// Purpose: UI composition, menus, and layout for the MainForm.
-// Notes:
-//  • Documentation-only header added (no behavioral changes).
-//  • Keep UI hooks intact: EnsureDownloadButtons(), EnsureStartupChecks(), EnsureCloudMenu().
-//  • Database root resolution is centralized (ResolveDatabasesRoot / helpers).
-//  • Startup creates: Files\, Files\Database\, Files\Tools\ (if missing).
-//  • 'ReloadDB' clears trees and calls LoadDatabaseSelector().
-// Added: 2025-09-12
-// ─────────────────────────────────────────────────────────────────────────────
-
 using System;
 using System.IO;
 using System.Windows.Forms;
@@ -19,70 +7,183 @@ namespace CMPCodeDatabase
 {
     public class SettingsForm : Form
     {
-        private TextBox txtPatchTool;
-        private Button btnBrowse;
-        private CheckBox chkShowPatchLog;
-        private CheckBox chkOpenCollectorOnAdd;
-        private TextBox txtDbUrl;
-        private TextBox txtToolsUrl;
-        private Button btnOk;
-        private Button btnCancel;
+        private readonly Label lblPatchTool = new Label();
+        private readonly Label lblDbUrl = new Label();
+        private readonly Label lblToolsUrl = new Label();
+
+        private readonly TextBox txtPatchTool = new TextBox();
+        private readonly Button btnBrowsePatchTool = new Button();
+
+        private readonly CheckBox chkShowPatchLogByDefault = new CheckBox();
+        private readonly CheckBox chkOpenCollectorWhenAddingCodes = new CheckBox();
+
+        private readonly TextBox txtDbUrl = new TextBox();
+        private readonly TextBox txtToolsUrl = new TextBox();
+
+        private readonly Button btnOK = new Button();
+        private readonly Button btnCancel = new Button();
 
         public SettingsForm()
         {
             Text = "Settings";
-            Width = 620;
-            Height = 260;
             StartPosition = FormStartPosition.CenterParent;
             FormBorderStyle = FormBorderStyle.FixedDialog;
-            MaximizeBox = false;
             MinimizeBox = false;
+            MaximizeBox = false;
 
-            var lblPatch = new Label { Text = "Patch Tool:", Left = 12, Top = 16, AutoSize = true };
-            txtPatchTool = new TextBox { Left = 120, Top = 12, Width = 360, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
-            btnBrowse = new Button { Text = "Browse…", Left = 490, Top = 10, Width = 100, Anchor = AnchorStyles.Top | AnchorStyles.Right };
+            // DPI / Accessibility Text Size safe defaults
+            AutoScaleMode = AutoScaleMode.Font;
+            AutoScroll = true;
 
-            chkShowPatchLog = new CheckBox { Text = "Show patch log by default", Left = 120, Top = 44, AutoSize = true };
-            chkOpenCollectorOnAdd = new CheckBox { Text = "Open Collector window when adding codes", Left = 120, Top = 68, AutoSize = true };
+            // A slightly wider base helps long paths/URLs at higher text sizes.
+            ClientSize = new System.Drawing.Size(760, 320);
+            MinimumSize = new System.Drawing.Size(760, 320);
 
-            var lblDbUrl = new Label { Text = "Database Download URL:", Left = 12, Top = 100, AutoSize = true };
-            txtDbUrl = new TextBox { Left = 180, Top = 96, Width = 410, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
+            // Labels
+            lblPatchTool.AutoSize = true;
+            lblPatchTool.Text = "Patch Tool:";
 
-            var lblToolsUrl = new Label { Text = "Tools Download URL:", Left = 12, Top = 128, AutoSize = true };
-            txtToolsUrl = new TextBox { Left = 180, Top = 124, Width = 410, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
+            lblDbUrl.AutoSize = true;
+            lblDbUrl.Text = "Database Download URL:";
 
-            btnOk = new Button { Text = "OK", Left = 430, Top = 168, Width = 120, DialogResult = DialogResult.OK, Anchor = AnchorStyles.Bottom | AnchorStyles.Right };
-            btnCancel = new Button { Text = "Cancel", Left = 300, Top = 168, Width = 120, DialogResult = DialogResult.Cancel, Anchor = AnchorStyles.Bottom | AnchorStyles.Right };
+            lblToolsUrl.AutoSize = true;
+            lblToolsUrl.Text = "Tools Download URL:";
 
-            Controls.AddRange(new Control[] { lblPatch, txtPatchTool, btnBrowse, chkShowPatchLog, chkOpenCollectorOnAdd, lblDbUrl, txtDbUrl, lblToolsUrl, txtToolsUrl, btnOk, btnCancel });
+            // Inputs
+            txtPatchTool.Dock = DockStyle.Fill;
+            txtDbUrl.Dock = DockStyle.Fill;
+            txtToolsUrl.Dock = DockStyle.Fill;
 
-            Load += (_, __) => LoadSettings();
-            btnBrowse.Click += (_, __) =>
+            btnBrowsePatchTool.Text = "Browse...";
+            btnBrowsePatchTool.AutoSize = true;
+            btnBrowsePatchTool.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            btnBrowsePatchTool.Padding = new Padding(10, 4, 10, 4);
+
+            chkShowPatchLogByDefault.Text = "Show patch log by default";
+            chkShowPatchLogByDefault.AutoSize = true;
+
+            chkOpenCollectorWhenAddingCodes.Text = "Open Collector window when adding codes";
+            chkOpenCollectorWhenAddingCodes.AutoSize = true;
+
+            btnOK.Text = "OK";
+            btnOK.AutoSize = true;
+            btnOK.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            btnOK.Padding = new Padding(14, 4, 14, 4);
+
+            btnCancel.Text = "Cancel";
+            btnCancel.AutoSize = true;
+            btnCancel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            btnCancel.Padding = new Padding(14, 4, 14, 4);
+
+            // Layout: 3 columns (label | input | browse button)
+            var layout = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                Padding = new Padding(12),
+                ColumnCount = 3,
+                RowCount = 7,
+                AutoSize = false,
+            };
+
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Patch tool row
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Checkbox row 1
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Checkbox row 2
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // DB URL
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Tools URL
+            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f)); // Filler
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Buttons
+
+            // Row 0: Patch Tool
+            layout.Controls.Add(lblPatchTool, 0, 0);
+            layout.Controls.Add(txtPatchTool, 1, 0);
+            layout.Controls.Add(btnBrowsePatchTool, 2, 0);
+
+            // Row 1: checkbox
+            layout.Controls.Add(chkShowPatchLogByDefault, 1, 1);
+            layout.SetColumnSpan(chkShowPatchLogByDefault, 2);
+
+            // Row 2: checkbox
+            layout.Controls.Add(chkOpenCollectorWhenAddingCodes, 1, 2);
+            layout.SetColumnSpan(chkOpenCollectorWhenAddingCodes, 2);
+
+            // Row 3: DB URL
+            layout.Controls.Add(lblDbUrl, 0, 3);
+            layout.Controls.Add(txtDbUrl, 1, 3);
+            layout.SetColumnSpan(txtDbUrl, 2);
+
+            // Row 4: Tools URL
+            layout.Controls.Add(lblToolsUrl, 0, 4);
+            layout.Controls.Add(txtToolsUrl, 1, 4);
+            layout.SetColumnSpan(txtToolsUrl, 2);
+
+            // Row 6: Buttons (right aligned)
+            var buttonRow = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.RightToLeft,
+                WrapContents = false,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Margin = new Padding(0),
+                Padding = new Padding(0),
+            };
+
+            buttonRow.Controls.Add(btnOK);
+            buttonRow.Controls.Add(btnCancel);
+
+            layout.Controls.Add(buttonRow, 0, 6);
+            layout.SetColumnSpan(buttonRow, 3);
+
+            Controls.Add(layout);
+
+            AcceptButton = btnOK;
+            CancelButton = btnCancel;
+
+            LoadSettings();
+
+            // Events
+            btnBrowsePatchTool.Click += (s, e) =>
             {
                 using var ofd = new OpenFileDialog
                 {
-                    Title = "Select Patch Tool",
                     Filter = "Executable (*.exe)|*.exe|All files (*.*)|*.*",
-                    InitialDirectory = Directory.Exists(ToolPathResolver.DefaultToolsDir) ? ToolPathResolver.DefaultToolsDir : ToolPathResolver.AppRoot
+                    Title = "Select patcher.exe"
                 };
+
+                if (!string.IsNullOrWhiteSpace(txtPatchTool.Text))
+                {
+                    try { ofd.InitialDirectory = Path.GetDirectoryName(txtPatchTool.Text); }
+                    catch { }
+                }
+
                 if (ofd.ShowDialog(this) == DialogResult.OK)
                     txtPatchTool.Text = ofd.FileName;
             };
 
-            btnOk.Click += (_, __) =>
+            btnOK.Click += (s, e) =>
             {
-                if (SaveSettings())
-                    DialogResult = DialogResult.OK;
+                SaveSettings();
+                DialogResult = DialogResult.OK;
+                Close();
             };
-            btnCancel.Click += (_, __) => DialogResult = DialogResult.Cancel;
+
+            btnCancel.Click += (s, e) =>
+            {
+                DialogResult = DialogResult.Cancel;
+                Close();
+            };
         }
 
         private void LoadSettings()
         {
             var s = AppSettings.Instance;
             txtPatchTool.Text = s.PatchToolPath ?? string.Empty;
-            chkShowPatchLog.Checked = s.ShowPatchLogByDefault;
-            chkOpenCollectorOnAdd.Checked = s.OpenCollectorOnAdd;
+            chkShowPatchLogByDefault.Checked = s.ShowPatchLogByDefault;
+            chkOpenCollectorWhenAddingCodes.Checked = s.OpenCollectorOnAdd;
             txtDbUrl.Text = s.DatabaseDownloadUrl ?? string.Empty;
             txtToolsUrl.Text = s.ToolsDownloadUrl ?? string.Empty;
         }
@@ -91,8 +192,8 @@ namespace CMPCodeDatabase
         {
             var s = AppSettings.Instance;
             s.PatchToolPath = txtPatchTool.Text?.Trim();
-            s.ShowPatchLogByDefault = chkShowPatchLog.Checked;
-            s.OpenCollectorOnAdd = chkOpenCollectorOnAdd.Checked;
+            s.ShowPatchLogByDefault = chkShowPatchLogByDefault.Checked;
+            s.OpenCollectorOnAdd = chkOpenCollectorWhenAddingCodes.Checked;
             s.DatabaseDownloadUrl = txtDbUrl.Text?.Trim();
             s.ToolsDownloadUrl = txtToolsUrl.Text?.Trim();
             s.Save();

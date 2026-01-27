@@ -19,6 +19,8 @@ namespace CMPCodeDatabase
     {
         private void BuildUi()
         {
+            AutoScaleMode = AutoScaleMode.Font;
+            AutoScroll = true;
             var root = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
@@ -51,6 +53,9 @@ namespace CMPCodeDatabase
                 SelectionMode = DataGridViewSelectionMode.FullRowSelect,
                 MultiSelect = false,
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.DisplayedCells,
+                DefaultCellStyle = { WrapMode = DataGridViewTriState.False },
+                AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells,
+                ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize,
             };
             grpIds.Controls.Add(gridIds);
             root.Controls.Add(grpIds, 0, 1);

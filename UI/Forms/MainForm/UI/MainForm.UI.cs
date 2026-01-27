@@ -19,6 +19,11 @@ namespace CMPCodeDatabase
                 {
                     Text = CMPCodeDatabase.Util.VersionUtil.BuildWindowTitle();
                     StartPosition = FormStartPosition.CenterScreen;
+                    AutoScaleMode = AutoScaleMode.Font;
+                    FormBorderStyle = FormBorderStyle.Sizable;
+                    MaximizeBox = true;
+                    MinimizeBox = true;
+
 
                     // MenuStrip
                     var menu = new MenuStrip();
@@ -56,17 +61,18 @@ viewMenu.DropDownItems.Add(dbStatsItem);
 
         menu.Items.Add(helpMenu);
         Controls.Add(menu);
+                    _mainMenu = menu;
                     menu.Dock = DockStyle.Top;
 
                     // Left: Games
-                    Label lblGames = new Label() { Left = 10, Top = 25, Width = 100, Text = "Games" };
+                    Label lblGames = new Label() { Left = 10, Top = 25, AutoSize = true, Text = "Games" };
                     dbSelector = new ComboBox() { Left = 10, Top = 50, Width = 200, DropDownStyle = ComboBoxStyle.DropDownList };
                     dbSelector.SelectedIndexChanged += DbSelector_SelectedIndexChanged;
                     treeGames = new TreeView() { Left = 10, Top = 80, Width = 250, Height = 520, HideSelection = false };
                     treeGames.AfterSelect += TreeGames_AfterSelect;
 
                    // Middle: Codes
-Label lblCodes = new Label() { Left = 270, Top = 25, Width = 100, Text = "Codes" };
+Label lblCodes = new Label() { Left = 270, Top = 25, AutoSize = true, Text = "Codes" };
 
 treeCodes = new TreeView()
 {
@@ -99,7 +105,7 @@ treeCodes.AfterCollapse  += (_, __) => TreeViewExtent.UpdateHorizontalExtent(tre
 
 
 // Right: Code preview (monospace, no wrap)
-                    Label lblPreview = new Label() { Left = 780, Top = 25, Width = 120, Text = "Code Preview" };
+                    Label lblPreview = new Label() { Left = 780, Top = 25, AutoSize = true, Text = "Code Preview" };
                     txtCodePreview = new TextBox()
                     {
                         Left = 780,
@@ -115,7 +121,7 @@ treeCodes.AfterCollapse  += (_, __) => TreeViewExtent.UpdateHorizontalExtent(tre
                     Size size = TextRenderer.MeasureText(new string('0', charsDesired), txtCodePreview.Font);
                     txtCodePreview.Width = Math.Max(360, size.Width + 20);
 
-                    btnRefresh = new Button() { Left = 270, Top = 580, Width = 100, Text = "ReloadDB" };
+                    btnRefresh = new Button() { Left = 270, Top = 580, Text = "ReloadDB", AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Padding = new Padding(10, 4, 10, 4) };
                     btnRefresh.Click += BtnRefresh_Click;
 
                     Controls.AddRange(new Control[]
@@ -127,8 +133,111 @@ treeCodes.AfterCollapse  += (_, __) => TreeViewExtent.UpdateHorizontalExtent(tre
                     int maxRight = Controls.Cast<Control>().Max(c => c.Left + c.Width);
                     int maxBottom = Controls.Cast<Control>().Max(c => c.Top + c.Height);
                     this.ClientSize = new Size(maxRight + 10, maxBottom + 10);
+                                        // Capture baseline widths and apply responsive layout (DPI/Text Size safe)
+                    CaptureMainLayout(treeGames.Width, treeCodes.Width, txtCodePreview.Width);
+                    this.Shown += (_, __) => ApplyMainResponsiveLayout(lblGames, lblCodes, lblPreview);
+                    this.Resize += (_, __) => ApplyMainResponsiveLayout(lblGames, lblCodes, lblPreview);
+                    ApplyMainResponsiveLayout(lblGames, lblCodes, lblPreview);
                     KeyPreview = true;
                 }
+
+        
+// Responsive layout (keeps original look, but fixes large Text Size / DPI and allows resizing).
+private bool _mainLayoutCaptured;
+private int _baseClientW, _baseClientH;
+private int _baseGamesW, _baseCodesW, _basePreviewW;
+private int _gapCols = 10;
+private MenuStrip? _mainMenu;
+
+private void CaptureMainLayout(int gamesW, int codesW, int prevW)
+{
+    if (_mainLayoutCaptured) return;
+    _baseClientW = ClientSize.Width;
+    _baseClientH = ClientSize.Height;
+    _baseGamesW = gamesW;
+    _baseCodesW = codesW;
+    _basePreviewW = prevW;
+    _mainLayoutCaptured = true;
+}
+
+private void ApplyMainResponsiveLayout(Label lblGames, Label lblCodes, Label lblPreview)
+{
+    if (treeGames == null || treeCodes == null || txtCodePreview == null || dbSelector == null || btnRefresh == null)
+        return;
+
+    // Top baseline: always below the MenuStrip (prevents headers being hidden at large Text Size)
+    int menuH = _mainMenu?.Height ?? 0;
+    int yLabel = menuH + 8;
+    int yCombo = yLabel + lblGames.Height + 6;
+    int yTreeTop = yCombo + dbSelector.Height + 8;
+
+    // Bottom area (Reload + optional toggle) reserve
+    int bottomPad = 10;
+    int btnRowH = btnRefresh.Height + 8;
+
+    // Extra width distributed equally
+    int deltaW = ClientSize.Width - _baseClientW;
+    int per = deltaW / 3;
+    int rem = deltaW - per * 3;
+
+    int wGames = Math.Max(_baseGamesW, _baseGamesW + per + (rem > 0 ? 1 : 0));
+    int wCodes = Math.Max(_baseCodesW, _baseCodesW + per + (rem > 1 ? 1 : 0));
+    int wPrev  = Math.Max(_basePreviewW, _basePreviewW + per);
+
+    int xGames = 10;
+    int xCodes = xGames + wGames + _gapCols;
+    int xPrev  = xCodes + wCodes + _gapCols;
+
+    // Labels
+    lblGames.Left = xGames;  lblGames.Top = yLabel;
+    lblCodes.Left = xCodes;  lblCodes.Top = yLabel;
+    lblPreview.Left = xPrev; lblPreview.Top = yLabel;
+
+    // Games controls
+    dbSelector.Left = xGames;
+    dbSelector.Top = yCombo;
+    dbSelector.Width = Math.Max(200, wGames);
+
+    treeGames.Left = xGames;
+    treeGames.Top = yTreeTop;
+    treeGames.Width = wGames;
+
+    // Codes tree
+    treeCodes.Left = xCodes;
+    treeCodes.Top = yCombo;
+    treeCodes.Width = wCodes;
+
+    // Preview
+    txtCodePreview.Left = xPrev;
+    txtCodePreview.Top = yCombo;
+    txtCodePreview.Width = wPrev;
+
+    // Heights grow with window, but never smaller than current content baseline
+    int usableH = ClientSize.Height - yTreeTop - btnRowH - bottomPad;
+    int minTreeH = 220;
+    int hTrees = Math.Max(minTreeH, usableH);
+
+    treeGames.Height = hTrees;
+    treeCodes.Height = hTrees;
+    txtCodePreview.Height = hTrees;
+
+    // Reload row stays aligned under Codes column
+    btnRefresh.Left = xCodes;
+    btnRefresh.Top = yTreeTop + hTrees + 8;
+
+    // If the expand toggle exists, keep it beside Reload
+    try
+    {
+        var toggle = Controls.Find("btnExpandCollapseToggle", true).FirstOrDefault() as Button;
+        if (toggle != null && !toggle.IsDisposed)
+        {
+            toggle.Top = btnRefresh.Top;
+            toggle.Left = btnRefresh.Right + 8;
+            toggle.Height = btnRefresh.Height;
+        }
+    }
+    catch { }
+}
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
                 {

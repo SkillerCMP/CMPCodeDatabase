@@ -46,9 +46,33 @@ EnsureLogPanel();
         {
             if (_logPanel != null && !_logPanel.IsDisposed) return;
 
-            _logPanel = new Panel { Dock = DockStyle.Bottom, Height = 200, Padding = new Padding(8, 6, 8, 0) , Margin = new Padding(0)};
-            var bottomBar = new Panel { Dock = DockStyle.Bottom, Height = 5 , Margin = new Padding(0)};
-            var btnClearLog = new Button { Text = "Clear Log", Anchor = AnchorStyles.Bottom | AnchorStyles.Right, Width = 100, Height = 24 };
+            _logPanel = new Panel { Dock = DockStyle.Bottom, Height = 200, Padding = new Padding(8, 6, 8, 0), Margin = Padding.Empty };
+
+            // Bottom bar (auto-sizes with Windows "Text size" / Font scaling)
+            var bottomBar = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Bottom,
+                FlowDirection = FlowDirection.RightToLeft,
+                WrapContents = false,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Padding = new Padding(0, 3, 0, 3),
+                Margin = Padding.Empty
+            };
+
+            var btnClearLog = new Button
+            {
+                Name = "btnClearLog",
+                Text = "Clear Log",
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Padding = new Padding(10, 4, 10, 4),
+                Margin = Padding.Empty
+            };
+            btnClearLog.Click += (s, _) => ClearLog();
+
+            bottomBar.Controls.Add(btnClearLog);
+
             _rtbLog = new RichTextBox
             {
                 Dock = DockStyle.Fill,
@@ -59,17 +83,9 @@ EnsureLogPanel();
                 BackColor = Color.White
             };
 
-            bottomBar.Controls.Add(btnClearLog);
-            btnClearLog.Top = 3;
-            bottomBar.Resize += (s, _) => btnClearLog.Left = bottomBar.Width - btnClearLog.Width - 8;
-            btnClearLog.Left = bottomBar.Width - btnClearLog.Width - 8;
-            btnClearLog.Click += (s, _) => ClearLog();
-
             _logPanel.Controls.Add(_rtbLog);
             _logPanel.Controls.Add(bottomBar);
             Controls.Add(_logPanel);
-                        // _logPanel.BringToFront(); // removed to prevent overlay over Fill
-// _logPanel.BringToFront(); // removed to prevent overlay over Fill
         }
 
         private void RelayoutButtons()

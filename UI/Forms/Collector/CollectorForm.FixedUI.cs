@@ -31,17 +31,20 @@ namespace CMPCodeDatabase
                 try { if (_rtbLog != null) _rtbLog.ScrollBars = RichTextBoxScrollBars.Both; } catch { }
                 try { if (clbCollector != null) clbCollector.HorizontalScrollbar = true; } catch { }
 
-                // Compute fixed width from probe text
+                // Compute a *minimum* width from probe text (do not hard-lock window size).
                 var useFont = (clbCollector != null ? clbCollector.Font : this.Font);
                 var sz = TextRenderer.MeasureText(__WidthProbe, useFont);
-                int targetWidth = Math.Max(560, sz.Width + 80); // padding
+                int minWidth = Math.Max(560, sz.Width + 140); // extra padding for large text/buttons
 
-                int h = this.Height;
-                this.Size = new Size(targetWidth, h);
-                this.MinimumSize = new Size(targetWidth, h);
-                this.MaximumSize = new Size(targetWidth, h);
-                if (this.FormBorderStyle == FormBorderStyle.Sizable) this.FormBorderStyle = FormBorderStyle.FixedDialog;
-                this.MaximizeBox = false;
+                // Only grow if needed; leave user free to resize smaller/larger.
+                if (this.Width < minWidth) this.Width = minWidth;
+
+                int minHeight = Math.Max(this.MinimumSize.Height, 520);
+                this.MinimumSize = new Size(minWidth, minHeight);
+
+                // Keep it resizable so Windows "Text size" doesn't clip fixed-size UI.
+                if (this.FormBorderStyle == FormBorderStyle.FixedDialog)
+                    this.FormBorderStyle = FormBorderStyle.Sizable;
             }
             catch { }
         }

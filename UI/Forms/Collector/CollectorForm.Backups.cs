@@ -71,26 +71,32 @@ namespace CMPCodeDatabase
                                         .FirstOrDefault(p => p.Controls.OfType<RichTextBox>().Any())
                               ?? (Control)this;
 
-            _backupBar = new Panel { Dock = DockStyle.Bottom, Height = 40, Padding = new Padding(8, 4, 8, 6) };
-            
-			_btnOpenBackups = new Button
+            // Height based on current font so it survives Windows Accessibility -> Text size
+            int barH = Math.Max(40, (int)Math.Ceiling(this.Font.Height * 2.6));
+
+            _backupBar = new Panel { Dock = DockStyle.Bottom, Height = barH, Padding = new Padding(8, 4, 8, 6) };
+
+            _btnOpenBackups = new Button
             {
                 Text = "Open Backups",
-                Width = 120,
-                Height = 24,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Padding = new Padding(10, 4, 10, 4),
                 Anchor = AnchorStyles.Left | AnchorStyles.Bottom
             };
             _btnRestoreBackup = new Button
             {
                 Text = "Restore Backup",
-                Width = 120,
-                Height = 24,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Padding = new Padding(10, 4, 10, 4),
                 Anchor = AnchorStyles.Left | AnchorStyles.Bottom
             };
-            _chkBackup = new CheckBox { Text = "Backup before patch", Checked = true,
+            _chkBackup = new CheckBox
+            {
+                Text = "Backup before patch",
+                Checked = true,
                 AutoSize = true,
-                Left = 240,
-                Top = 6,
                 Anchor = AnchorStyles.Left | AnchorStyles.Bottom
             };
 
@@ -101,26 +107,15 @@ namespace CMPCodeDatabase
             host.Controls.Add(_backupBar);
             _backupBar.BringToFront();
 
-            _backupBar.Resize += (s, _) =>
-            {
-                if (_btnRestoreBackup != null && _btnOpenBackups != null)
-                {
-                    _btnRestoreBackup.Left = _backupBar.Width - _btnRestoreBackup.Width - 8;
-                    _btnRestoreBackup.Top = 3;
-                    _btnOpenBackups.Left = _btnRestoreBackup.Left - _btnOpenBackups.Width - 6;
-                    _btnOpenBackups.Top = 3;
-                }
-            };
-            _backupBar.PerformLayout();
-            LayoutBackupRowOnce();
+            _backupBar.Resize += (s, _) => LayoutBackupRowOnce();
 
-            
             // Ensure Clear Log button is available and moved to backup row (right-aligned)
-            try {
+            try
+            {
                 if (_clearLogBtn == null)
                 {
                     var found = this.Controls.Find("btnClearLog", true);
-                    _clearLogBtn = (found != null && found.Length > 0 ? found[0] as Button : null) 
+                    _clearLogBtn = (found != null && found.Length > 0 ? found[0] as Button : null)
                                    ?? FindDeepByText<Button>(this, "Clear Log");
                 }
                 if (_clearLogBtn != null && _clearLogBtn.Parent != _backupBar)
@@ -130,12 +125,17 @@ namespace CMPCodeDatabase
                 }
                 if (_clearLogBtn != null)
                 {
-                    _clearLogBtn.Top = 3;
-                    _clearLogBtn.Left = _backupBar.Width - _clearLogBtn.Width - 8;
+                    _clearLogBtn.AutoSize = true;
+                    _clearLogBtn.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+                    _clearLogBtn.Padding = new Padding(10, 4, 10, 4);
                     _clearLogBtn.Anchor = AnchorStyles.Top | AnchorStyles.Right;
                 }
-            } catch { }
-if (_btnOpenBackups != null) _btnOpenBackups.Click += (s, e) => OpenBackupsFolder();
+            }
+            catch { }
+
+            try { BeginInvoke(new Action(() => LayoutBackupRowOnce())); } catch { LayoutBackupRowOnce(); }
+
+            if (_btnOpenBackups != null) _btnOpenBackups.Click += (s, e) => OpenBackupsFolder();
             if (_btnRestoreBackup != null) _btnRestoreBackup.Click += (s, e) => RestoreBackupInteractive();
         }
 
@@ -144,10 +144,12 @@ if (_btnOpenBackups != null) _btnOpenBackups.Click += (s, e) => OpenBackupsFolde
         {
             try
             {
-                int left = 8;
-                if (_btnOpenBackups != null) { _btnOpenBackups.Left = left; _btnOpenBackups.Top = 3; left = _btnOpenBackups.Right + 6; }
-                if (_btnRestoreBackup != null) { _btnRestoreBackup.Left = left; _btnRestoreBackup.Top = 3; left = _btnRestoreBackup.Right + 12; }
-                if (_chkBackup != null) { _chkBackup.Left = left; _chkBackup.Top = 6; }
+                if (_backupBar == null) return;
+
+                int padL = _backupBar.Padding.Left;
+                int padR = _backupBar.Padding.Right;
+
+                // Right-aligned: Clear Log
                 if (_clearLogBtn == null)
                 {
                     var found = this.Controls.Find("btnClearLog", true);
@@ -161,11 +163,59 @@ if (_btnOpenBackups != null) _btnOpenBackups.Click += (s, e) => OpenBackupsFolde
                         _clearLogBtn.Parent?.Controls.Remove(_clearLogBtn);
                         _backupBar.Controls.Add(_clearLogBtn);
                     }
+                    _clearLogBtn.AutoSize = true;
+                    _clearLogBtn.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+                    _clearLogBtn.Padding = new Padding(10, 4, 10, 4);
                     _clearLogBtn.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-                    _clearLogBtn.Top = 3;
-                    _clearLogBtn.Left = _backupBar.Width - _clearLogBtn.Width - 8;
                 }
-            } catch { }
+
+                int yCenter(Control c)
+                {
+                    int y = (_backupBar.ClientSize.Height - c.Height) / 2;
+                    return Math.Max(0, y);
+                }
+
+                int clearLeft = _backupBar.ClientSize.Width - padR;
+                if (_clearLogBtn != null)
+                {
+                    _clearLogBtn.Location = new System.Drawing.Point(_backupBar.ClientSize.Width - _clearLogBtn.Width - padR, yCenter(_clearLogBtn));
+                    clearLeft = _clearLogBtn.Left - 12;
+                }
+
+                // Left-to-right: Open, Restore, Checkbox
+                int left = padL;
+                if (_btnOpenBackups != null)
+                {
+                    _btnOpenBackups.Location = new System.Drawing.Point(left, yCenter(_btnOpenBackups));
+                    left = _btnOpenBackups.Right + 8;
+                }
+                if (_btnRestoreBackup != null)
+                {
+                    _btnRestoreBackup.Location = new System.Drawing.Point(left, yCenter(_btnRestoreBackup));
+                    left = _btnRestoreBackup.Right + 14;
+                }
+
+                if (_chkBackup != null)
+                {
+                    int avail = Math.Max(60, clearLeft - left);
+                    int pref = _chkBackup.PreferredSize.Width;
+
+                    if (pref > avail)
+                    {
+                        _chkBackup.AutoSize = false;
+                        _chkBackup.AutoEllipsis = true;
+                        _chkBackup.Width = avail;
+                    }
+                    else
+                    {
+                        _chkBackup.AutoEllipsis = false;
+                        _chkBackup.AutoSize = true;
+                    }
+
+                    _chkBackup.Location = new System.Drawing.Point(left, yCenter(_chkBackup));
+                }
+            }
+            catch { }
         }
     
         private void OnPatchRunRequested_Backup(object? sender, PatchRequestEventArgs e)

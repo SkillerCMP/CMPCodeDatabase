@@ -57,12 +57,20 @@ namespace CMPCodeDatabase
                     HeaderText = "SecondLayer",
                     UseColumnTextForButtonValue = false,
                     FlatStyle = FlatStyle.Popup,
-                    Width = 90,
+                    AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells,
+                    MinimumWidth = 90,
                     ReadOnly = false,
                     Frozen = true
                 };
                 gridIds.Columns.Insert(targetIndex, btnCol);
                 encCol = btnCol;
+                try
+                {
+                    gridIds.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+                    gridIds.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
+                    gridIds.RowTemplate.Height = Math.Max(gridIds.RowTemplate.Height, gridIds.Font.Height + 10);
+                }
+                catch { }
             }
             else if (encCol.Index != targetIndex)
             {

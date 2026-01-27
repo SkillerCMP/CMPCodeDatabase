@@ -32,14 +32,17 @@ namespace CMPCodeDatabase
             MaximizeBox = false;
             MinimizeBox = false;
             StartPosition = FormStartPosition.CenterParent;
-            ClientSize = new Size(480, 180);
+            AutoScaleMode = AutoScaleMode.Font;
+            AutoScroll = true;
+            ClientSize = new Size(640, 220);
+            MinimumSize = new Size(640, 220);
 
-            lblInfo = new Label { Left = 12, Top = 14, Width = 440, Text = $"Input (text) → {label} hex bytes" };
-            txtInput = new TextBox { Left = 12, Top = 40, Width = 450 };
-            lblResult = new Label { Left = 12, Top = 75, Width = 440, Font = new Font(FontFamily.GenericSansSerif, 9, FontStyle.Bold), Text = "Result: " };
+            lblInfo = new Label { Left = 12, Top = 14, AutoSize = true, Text = $"Input (text) → {label} hex bytes" };
+            txtInput = new TextBox { Left = 12, Top = 40, Width = ClientSize.Width - 24, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
+            lblResult = new Label { Left = 12, Top = 75, AutoSize = true, Font = new Font(FontFamily.GenericSansSerif, 9, FontStyle.Bold), Text = "Result: " };
 
-            btnOK = new Button { Left = 292, Top = 115, Width = 80, Text = "OK" };
-            btnCancel = new Button { Left = 382, Top = 115, Width = 80, Text = "Cancel" };
+            btnOK = new Button { Left = 292, Top = 115, Text = "OK", AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Padding = new Padding(12,4,12,4) };
+            btnCancel = new Button { Left = 382, Top = 115, Text = "Cancel", AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Padding = new Padding(12,4,12,4) };
 
             btnOK.Click += (s, e) => { DialogResult = DialogResult.OK; Close(); };
             btnCancel.Click += (s, e) => { DialogResult = DialogResult.Cancel; Close(); };

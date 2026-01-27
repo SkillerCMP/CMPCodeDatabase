@@ -23,6 +23,9 @@ namespace CMPCodeDatabase
                                 Text = "Notes - " + (title ?? "");
                                 Width = 760;
                                 Height = 680;
+                                AutoScaleMode = AutoScaleMode.Font;
+                                AutoScroll = true;
+                                MinimumSize = new System.Drawing.Size(520, 420);
                                 browser.Dock = DockStyle.Fill;
                                 Controls.Add(browser);
                                 browser.DocumentText = WrapHtml(htmlFragment ?? "");

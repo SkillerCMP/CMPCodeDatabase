@@ -45,11 +45,11 @@ namespace CMPCodeDatabase
             var patchBar = new FlowLayoutPanel
             {
                 Dock = DockStyle.Top,
-                Height = 40,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 Padding = new Padding(8),
                 FlowDirection = FlowDirection.LeftToRight,
-                WrapContents = false,
-                AutoSize = false
+                WrapContents = true
             };
             btnPatchRunSelected      = new Button { Text = "Run Patch (Checked)", AutoSize = true };
             btnPatchRunAll           = new Button { Text = "Run Patch (All)",     AutoSize = true };
@@ -60,11 +60,11 @@ namespace CMPCodeDatabase
             dataBar = new FlowLayoutPanel
             {
                 Dock = DockStyle.Top,
-                Height = 36,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 Padding = new Padding(8, 0, 8, 0),
                 FlowDirection = FlowDirection.LeftToRight,
-                WrapContents = false,
-                AutoSize = false
+                WrapContents = false
             };
             lblDataFile   = new Label { Text = "Target file:", AutoSize = true, TextAlign = ContentAlignment.MiddleLeft, Padding = new Padding(0, 8, 6, 0) };
             txtDataFile   = new TextBox { ReadOnly = true, Width = 200, AllowDrop = true };
@@ -85,11 +85,11 @@ namespace CMPCodeDatabase
             var opsPanel = new FlowLayoutPanel
             {
                 Dock = DockStyle.Top,
-                Height = 38,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 Padding = new Padding(8),
                 FlowDirection = FlowDirection.LeftToRight,
-                WrapContents = false,
-                AutoSize = false
+                WrapContents = true
             };
             btnSelectAll  = new Button { Text = "Select All",  AutoSize = true };
             btnSelectNone = new Button { Text = "Select None", AutoSize = true };

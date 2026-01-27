@@ -18,6 +18,8 @@ namespace CMPCodeDatabase
         {
             Text = string.IsNullOrWhiteSpace(title) ? "Note" : $"Note — {title}";
             StartPosition = FormStartPosition.CenterParent;
+            AutoScaleMode = AutoScaleMode.Font;
+            AutoScroll = true;
             MinimizeBox = MaximizeBox = false;
             ShowInTaskbar = false;
             Width = 760; Height = 520;
@@ -42,8 +44,14 @@ namespace CMPCodeDatabase
             };
 
             btnContinue.Text = "Continue";
+            btnContinue.AutoSize = true;
+            btnContinue.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            btnContinue.Padding = new Padding(14,4,14,4);
             btnContinue.DialogResult = DialogResult.OK;
             btnDontUse.Text = "Don't Use";
+            btnDontUse.AutoSize = true;
+            btnDontUse.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            btnDontUse.Padding = new Padding(14,4,14,4);
             btnDontUse.DialogResult = DialogResult.Cancel;
 
             panelButtons.Controls.Add(btnContinue);

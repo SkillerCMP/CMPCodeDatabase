@@ -122,9 +122,9 @@ private Form? databaseStatsWindow;
                 private Label lblPreview = new Label() { Dock = DockStyle.Top, AutoSize = true, Padding = new Padding(4) };
                 private Label lblMeta = new Label() { Dock = DockStyle.Top, AutoSize = true, Padding = new Padding(4) };
                 private Label lblBoxName;
-                private Button btnDefault = new Button() { Text = "Use Default", Dock = DockStyle.Bottom };
-                private Button btnOK = new Button() { Text = "OK", Dock = DockStyle.Bottom };
-                private Button btnCancel = new Button() { Text = "Cancel", Dock = DockStyle.Bottom };
+                private Button btnDefault = new Button() { Text = "Use Default", AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Padding = new Padding(14, 4, 14, 4) };
+                private Button btnOK = new Button() { Text = "OK", AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Padding = new Padding(14, 4, 14, 4) };
+                private Button btnCancel = new Button() { Text = "Cancel", AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Padding = new Padding(14, 4, 14, 4) };
 
                 public string? ResultHex { get; private set; } // uppercase hex, exact byteSize*2 length
                 public string? SelectedHex => ResultHex;
@@ -157,17 +157,38 @@ var label = (boxLabel ?? string.Empty).Trim('<','>',' '); // safety: remove <>
 var caption = string.IsNullOrWhiteSpace(title) ? "Amount" : title;
 if (!string.IsNullOrWhiteSpace(label)) caption += " " + label;
 Text = caption;
-                    Width = 520; Height = 260; StartPosition = FormStartPosition.CenterParent;
+                    StartPosition = FormStartPosition.CenterParent;
+                    FormBorderStyle = FormBorderStyle.FixedDialog;
+                    MinimizeBox = false;
+                    MaximizeBox = false;
+                    AutoScaleMode = AutoScaleMode.Font;
+                    AutoScroll = true;
+                    Width = 520; Height = 260;
+                    MinimumSize = new System.Drawing.Size(520, 260);
 
                     var panel = new Panel() { Dock = DockStyle.Fill, Padding = new Padding(8) };
+
+                    var buttonRow = new FlowLayoutPanel
+                    {
+                        Dock = DockStyle.Bottom,
+                        AutoSize = true,
+                        AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                        FlowDirection = FlowDirection.RightToLeft,
+                        WrapContents = false,
+                        Padding = new Padding(8),
+                    };
                     Controls.Add(panel);
                     panel.Controls.Add(txtInput);
                     panel.Controls.Add(lblStatus);
                     panel.Controls.Add(lblPreview);
                     panel.Controls.Add(lblMeta);
-                    Controls.Add(btnCancel);
-                    Controls.Add(btnOK);
-                    Controls.Add(btnDefault);
+                    buttonRow.Controls.Add(btnCancel);
+                    buttonRow.Controls.Add(btnOK);
+                    buttonRow.Controls.Add(btnDefault);
+                    Controls.Add(buttonRow);
+
+                    AcceptButton = btnOK;
+                    CancelButton = btnCancel;
 
                     lblMeta.Text = $"Type: {this.type}   Endian: {this.endian}   Size: {byteSize} bytes";
 
@@ -179,6 +200,10 @@ Text = caption;
 
                     txtInput.TextChanged += (s, e) => ValidateLive();
                     ValidateLive();
+
+                    Shown += (_, __) => EnsureFitsTextSize(panel, buttonRow);
+                    FontChanged += (_, __) => EnsureFitsTextSize(panel, buttonRow);
+                    Resize += (_, __) => EnsureFitsTextSize(panel, buttonRow);
 
                     btnDefault.Text = $"Use Default ({defDisplay})";
                     btnDefault.Click += (s, e) => { txtInput.Text = defDisplay; txtInput.SelectAll(); };
@@ -510,7 +535,41 @@ Text = caption;
                     if (float.IsNaN(f)) return "NaN";
                     return f.ToString(System.Globalization.CultureInfo.InvariantCulture);
                 }
-            }
+            
+private void EnsureFitsTextSize(Control contentPanel, Control buttonRow)
+{
+    try
+    {
+        // Force layout so heights are correct under Accessibility "Text size"
+        PerformLayout();
+        contentPanel.PerformLayout();
+        buttonRow.PerformLayout();
+
+        int contentH = 0;
+        foreach (Control c in contentPanel.Controls)
+        {
+            if (!c.Visible) continue;
+            contentH += c.Margin.Vertical + c.Height;
+        }
+
+        if (contentPanel is Panel p) contentH += p.Padding.Vertical;
+
+        int requiredClientH = contentH + buttonRow.Height + 24;
+        int requiredW = Math.Max(Width, buttonRow.PreferredSize.Width + 32);
+
+        var wa = Screen.FromControl(this).WorkingArea;
+        int maxW = Math.Max(320, wa.Width - 80);
+        int maxClientH = Math.Max(240, wa.Height - 80);
+
+        int newW = Math.Min(maxW, requiredW);
+        int newClientH = Math.Min(maxClientH, Math.Max(ClientSize.Height, requiredClientH));
+
+        if (Width < newW) Width = newW;
+        if (ClientSize.Height < newClientH) ClientSize = new System.Drawing.Size(ClientSize.Width, newClientH);
+    }
+    catch { }
+}
+}
 
         internal class SimpleModDialog : Form
             {
@@ -576,8 +635,8 @@ Text = caption;
             internal class ModGridDialog : Form
             {
                 private TextBox txtFilter = new TextBox() { Dock = DockStyle.Top, PlaceholderText = "Filter..." };
-                private DataGridView grid = new DataGridView() { Dock = DockStyle.Fill, ReadOnly = true, SelectionMode = DataGridViewSelectionMode.FullRowSelect, MultiSelect = false, AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill };
-                private Button ok = new Button() { Text = "OK", Dock = DockStyle.Bottom };
+                private DataGridView grid = new DataGridView() { Dock = DockStyle.Fill, ReadOnly = true, SelectionMode = DataGridViewSelectionMode.FullRowSelect, MultiSelect = false, AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill, ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize };
+                private Button ok = new Button() { Text = "OK", Dock = DockStyle.Bottom, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Padding = new Padding(14, 4, 14, 4) };
                 private CheckBox chkSwapBytes = new CheckBox() { Text = "Swap bytes (e.g., 2710 → 1027)", Dock = DockStyle.Bottom, AutoSize = true };
 				private List<string[]> allRows;
                 private List<string> headers;
@@ -589,6 +648,12 @@ Text = caption;
                 {
                     Text = $"Select {tag}";
                     Width = 680; Height = 420; StartPosition = FormStartPosition.CenterParent;
+                    AutoScaleMode = AutoScaleMode.Font;
+                    AutoScroll = true;
+                    FormBorderStyle = FormBorderStyle.FixedDialog;
+                    MinimizeBox = false;
+                    MaximizeBox = false;
+                    MinimumSize = new System.Drawing.Size(680, 420);
                     this.headers = headers;
                     this.allRows = rows;
 
@@ -603,6 +668,8 @@ Text = caption;
                     txtFilter.TextChanged += (s, e) => ApplyFilter();
                     ok.Click += (s, e) => { TakeSelection(); };
                     grid.CellDoubleClick += (s, e) => { TakeSelection(); };
+
+                    Shown += (_, __) => { try { grid.AutoResizeColumnHeadersHeight(); } catch { } };
 
                     Controls.Add(grid);
 					Controls.Add(chkSwapBytes);                  // NEW: For ByteSwap
@@ -703,58 +770,170 @@ Text = caption;
                     Text = "Enhanced Converter";
                     Width = 820; Height = 520; StartPosition = FormStartPosition.CenterParent;
 
-                    int xL = 10, xR = 410, w = 380;
+                    // Better behavior on high-DPI and Accessibility > Text size
+                    AutoScaleMode = AutoScaleMode.Font;
+                    AutoScroll = true;
 
-                    Label lblIn = new Label() { Left = xL, Top = 10, Width = w, Text = "Input prefixes: 0x hex int, Fx float (8/16 hex chars) or decimal; inf/-inf/nan" };
-                    txtInput = new TextBox() { Left = xL, Top = 30, Width = w };
+                    // Main layout (two columns). Dock=Top + AutoSize allows AutoScroll when fonts grow.
+                    var main = new TableLayoutPanel()
+                    {
+                        Dock = DockStyle.Top,
+                        AutoSize = true,
+                        AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                        ColumnCount = 2,
+                        RowCount = 1,
+                        Padding = new Padding(10),
+                        GrowStyle = TableLayoutPanelGrowStyle.FixedSize
+                    };
+                    main.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+                    main.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+                    main.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
-                    cmbEndian = new ComboBox() { Left = xL, Top = 60, Width = 160, DropDownStyle = ComboBoxStyle.DropDownList };
+                    // LEFT column
+                    var left = new TableLayoutPanel()
+                    {
+                        Dock = DockStyle.Fill,
+                        AutoSize = true,
+                        AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                        ColumnCount = 1,
+                        RowCount = 1,
+                    GrowStyle = TableLayoutPanelGrowStyle.AddRows,
+                        Margin = new Padding(0, 0, 8, 0)
+                    };
+                    left.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+
+                    Label lblIn = new Label()
+                    {
+                        AutoSize = true,
+                        Text = "Input prefixes: 0x hex int, Fx float (8/16 hex chars) or decimal; inf/-inf/nan",
+                        Margin = new Padding(0, 0, 0, 6)
+                    };
+                    txtInput = new TextBox() { Anchor = AnchorStyles.Left | AnchorStyles.Right, Margin = new Padding(0, 0, 0, 6) };
+
+                    cmbEndian = new ComboBox() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 170 };
                     cmbEndian.Items.AddRange(new object[] { "Big-endian", "Little-endian" });
                     cmbEndian.SelectedIndex = 0;
                     cmbEndian.SelectedIndexChanged += (s, e) => { DoConvert(); DoFloatQuick(); };
 
-                    btnSwapEndian = new Button() { Left = xL + 170, Top = 60, Width = 120, Text = "Swap Endian" };
+                    btnSwapEndian = new Button() { AutoSize = true, Text = "Swap Endian" };
                     btnSwapEndian.Click += (s, e) => { cmbEndian.SelectedIndex = 1 - cmbEndian.SelectedIndex; DoConvert(); DoFloatQuick(); };
 
-                    btnConvert = new Button() { Left = xL, Top = 90, Width = 120, Text = "Convert" };
-                    btnConvert.Click += (s, e) => DoConvert();
+                    var pnlEndian = new FlowLayoutPanel()
+                    {
+                        AutoSize = true,
+                        AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                        FlowDirection = FlowDirection.LeftToRight,
+                        WrapContents = false,
+                        Margin = new Padding(0, 0, 0, 6)
+                    };
+                    pnlEndian.Controls.Add(cmbEndian);
+                    pnlEndian.Controls.Add(btnSwapEndian);
 
-                    btnClear = new Button() { Left = xL + 130, Top = 90, Width = 120, Text = "Clear" };
+                    btnConvert = new Button() { AutoSize = true, Text = "Convert" };
+                    btnConvert.Click += (s, e) => DoConvert();
+                    btnClear = new Button() { AutoSize = true, Text = "Clear" };
                     btnClear.Click += (s, e) => { txtInput.Clear(); txtOutDec.Clear(); txtOutHex.Clear(); txtOutF32.Clear(); txtOutF64.Clear(); };
 
+                    var pnlButtons = new FlowLayoutPanel()
+                    {
+                        AutoSize = true,
+                        AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                        FlowDirection = FlowDirection.LeftToRight,
+                        WrapContents = false,
+                        Margin = new Padding(0, 0, 0, 10)
+                    };
+                    pnlButtons.Controls.Add(btnConvert);
+                    pnlButtons.Controls.Add(btnClear);
+
                     // Outputs
-                    Label lblDec = new Label() { Left = xL, Top = 130, Width = w, Text = "Dec >" };
-                    txtOutDec = new TextBox() { Left = xL, Top = 150, Width = w, ReadOnly = true };
+                    Label lblDec = new Label() { AutoSize = true, Text = "Dec >", Margin = new Padding(0, 0, 0, 2) };
+                    txtOutDec = new TextBox() { Anchor = AnchorStyles.Left | AnchorStyles.Right, ReadOnly = true, Margin = new Padding(0, 0, 0, 8) };
 
-                    Label lblHex = new Label() { Left = xL, Top = 180, Width = w, Text = "Hex > (no 0x, endian-aware)" };
-                    txtOutHex = new TextBox() { Left = xL, Top = 200, Width = w, ReadOnly = true };
+                    Label lblHex = new Label() { AutoSize = true, Text = "Hex > (no 0x, endian-aware)", Margin = new Padding(0, 0, 0, 2) };
+                    txtOutHex = new TextBox() { Anchor = AnchorStyles.Left | AnchorStyles.Right, ReadOnly = true, Margin = new Padding(0, 0, 0, 8) };
 
-                    Label lblF32 = new Label() { Left = xL, Top = 230, Width = w, Text = "Float (32-bit) >  value | HEX" };
-                    txtOutF32 = new TextBox() { Left = xL, Top = 250, Width = w, ReadOnly = true };
+                    Label lblF32 = new Label() { AutoSize = true, Text = "Float (32-bit) >  value | HEX", Margin = new Padding(0, 0, 0, 2) };
+                    txtOutF32 = new TextBox() { Anchor = AnchorStyles.Left | AnchorStyles.Right, ReadOnly = true, Margin = new Padding(0, 0, 0, 8) };
 
-                    Label lblF64 = new Label() { Left = xL, Top = 280, Width = w, Text = "Double (64-bit) >  value | HEX" };
-                    txtOutF64 = new TextBox() { Left = xL, Top = 300, Width = w, ReadOnly = true };
+                    Label lblF64 = new Label() { AutoSize = true, Text = "Double (64-bit) >  value | HEX", Margin = new Padding(0, 0, 0, 2) };
+                    txtOutF64 = new TextBox() { Anchor = AnchorStyles.Left | AnchorStyles.Right, ReadOnly = true, Margin = new Padding(0, 0, 0, 0) };
 
-                    // Float arithmetic quick
-                    Label lblFloat = new Label() { Left = xR, Top = 10, Width = w, Text = "Float arithmetic (quick)" };
-                    txtFloatA = new TextBox() { Left = xR, Top = 30, Width = 140 };
-                    cmbOp = new ComboBox() { Left = xR + 150, Top = 30, Width = 60, DropDownStyle = ComboBoxStyle.DropDownList };
-                    cmbOp.Items.AddRange(new object[] { "+", "-", "*", "/" }); cmbOp.SelectedIndex = 0;
-                    txtFloatB = new TextBox() { Left = xR + 220, Top = 30, Width = 140 };
-                    btnFloatCalc = new Button() { Left = xR, Top = 60, Width = 120, Text = "=" };
+                    left.Controls.Add(lblIn);
+                    left.Controls.Add(txtInput);
+                    left.Controls.Add(pnlEndian);
+                    left.Controls.Add(pnlButtons);
+                    left.Controls.Add(lblDec);
+                    left.Controls.Add(txtOutDec);
+                    left.Controls.Add(lblHex);
+                    left.Controls.Add(txtOutHex);
+                    left.Controls.Add(lblF32);
+                    left.Controls.Add(txtOutF32);
+                    left.Controls.Add(lblF64);
+                    left.Controls.Add(txtOutF64);
+
+                    // RIGHT column (Float arithmetic quick)
+                    var right = new TableLayoutPanel()
+                    {
+                        Dock = DockStyle.Fill,
+                        AutoSize = true,
+                        AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                        ColumnCount = 1,
+                        RowCount = 1,
+                    GrowStyle = TableLayoutPanelGrowStyle.AddRows,
+                        Margin = new Padding(8, 0, 0, 0)
+                    };
+                    right.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+
+                    Label lblFloat = new Label() { AutoSize = true, Text = "Float arithmetic (quick)", Margin = new Padding(0, 0, 0, 6) };
+
+                    txtFloatA = new TextBox() { Width = 140 };
+                    cmbOp = new ComboBox() { Width = 70, DropDownStyle = ComboBoxStyle.DropDownList };
+                    cmbOp.Items.AddRange(new object[] { "+", "-", "*", "/" });
+                    cmbOp.SelectedIndex = 0;
+                    txtFloatB = new TextBox() { Width = 140 };
+
+                    var pnlQuick = new FlowLayoutPanel()
+                    {
+                        AutoSize = true,
+                        AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                        FlowDirection = FlowDirection.LeftToRight,
+                        WrapContents = false,
+                        Margin = new Padding(0, 0, 0, 6)
+                    };
+                    pnlQuick.Controls.Add(txtFloatA);
+                    pnlQuick.Controls.Add(cmbOp);
+                    pnlQuick.Controls.Add(txtFloatB);
+
+                    btnFloatCalc = new Button() { AutoSize = true, Text = "=" };
                     btnFloatCalc.Click += (s, e) => DoFloatQuick();
 
-                    Label lblQF32 = new Label() { Left = xR, Top = 100, Width = w, Text = "Result Float32 >  value | HEX" };
-                    txtFloatQuickF32 = new TextBox() { Left = xR, Top = 120, Width = w, ReadOnly = true };
+                    Label lblQF32 = new Label() { AutoSize = true, Text = "Result Float32 >  value | HEX", Margin = new Padding(0, 10, 0, 2) };
+                    txtFloatQuickF32 = new TextBox() { Anchor = AnchorStyles.Left | AnchorStyles.Right, ReadOnly = true, Margin = new Padding(0, 0, 0, 8) };
 
-                    Label lblQF64 = new Label() { Left = xR, Top = 150, Width = w, Text = "Result Float64 >  value | HEX" };
-                    txtFloatQuickF64 = new TextBox() { Left = xR, Top = 170, Width = w, ReadOnly = true };
+                    Label lblQF64 = new Label() { AutoSize = true, Text = "Result Float64 >  value | HEX", Margin = new Padding(0, 0, 0, 2) };
+                    txtFloatQuickF64 = new TextBox() { Anchor = AnchorStyles.Left | AnchorStyles.Right, ReadOnly = true, Margin = new Padding(0, 0, 0, 0) };
 
-                    Controls.AddRange(new Control[] {
-                        lblIn, txtInput, cmbEndian, btnSwapEndian, btnConvert, btnClear,
-                        lblDec, txtOutDec, lblHex, txtOutHex, lblF32, txtOutF32, lblF64, txtOutF64,
-                        lblFloat, txtFloatA, cmbOp, txtFloatB, btnFloatCalc, lblQF32, txtFloatQuickF32, lblQF64, txtFloatQuickF64
-                    });
+                    right.Controls.Add(lblFloat);
+                    right.Controls.Add(pnlQuick);
+                    right.Controls.Add(btnFloatCalc);
+                    right.Controls.Add(lblQF32);
+                    right.Controls.Add(txtFloatQuickF32);
+                    right.Controls.Add(lblQF64);
+                    right.Controls.Add(txtFloatQuickF64);
+
+                    main.Controls.Add(left, 0, 0);
+                    main.Controls.Add(right, 1, 0);
+                    Controls.Add(main);
+
+                    // Improve label wrapping when resizing
+                    void UpdateWrap()
+                    {
+                        int innerW = Math.Max(240, (ClientSize.Width - main.Padding.Horizontal - 24) / 2);
+                        lblIn.MaximumSize = new System.Drawing.Size(innerW, 0);
+                        lblFloat.MaximumSize = new System.Drawing.Size(innerW, 0);
+                    }
+                    Shown += (s, e) => UpdateWrap();
+                    SizeChanged += (s, e) => UpdateWrap();
 
                     KeyPreview = true;
                 }

@@ -20,7 +20,12 @@ using System.Collections.Generic;
 namespace CMPCodeDatabase
 {
     internal static class Program
-    {	
+    {
+        private static Icon _appIcon = SystemIcons.Application;
+        private static readonly HashSet<IntPtr> _iconApplied = new();
+        private static readonly HashSet<IntPtr> _shownHooked = new();
+        private static readonly HashSet<IntPtr> _clamped = new();
+
         [STAThread]
         static void Main()
         {
@@ -41,16 +46,20 @@ namespace CMPCodeDatabase
                     e.SetObserved();
                 };
 
-                ApplicationConfiguration.Initialize();
-				// Grab the icon embedded in the EXE (from <ApplicationIcon> / VS setting)
-try
-{
-    _appIcon = Icon.ExtractAssociatedIcon(Application.ExecutablePath) ?? SystemIcons.Application;
-}
-catch { _appIcon = SystemIcons.Application; }
+                // Best behavior for high DPI + mixed monitors (incl. 200% scaling / touch devices)
+                Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
 
-// Apply to any forms that open (covers everything: dialogs, tool windows, etc.)
-Application.Idle += (s, e) => ApplyIconToOpenForms();
+                ApplicationConfiguration.Initialize();
+
+                // Grab the icon embedded in the EXE (from <ApplicationIcon> / VS setting)
+                try
+                {
+                    _appIcon = Icon.ExtractAssociatedIcon(Application.ExecutablePath) ?? SystemIcons.Application;
+                }
+                catch { _appIcon = SystemIcons.Application; }
+
+                // Apply icon + clamp bounds for all open forms (after layout/shown)
+                Application.Idle += (s, e) => ApplyUiFixesToOpenForms();
 
                 Application.Run(new MainForm());
             }
@@ -59,28 +68,75 @@ Application.Idle += (s, e) => ApplyIconToOpenForms();
                 LogAndShow("Main", ex);
             }
         }
-private static Icon _appIcon = SystemIcons.Application;
-private static readonly HashSet<IntPtr> _iconApplied = new();
 
-private static void ApplyIconToOpenForms()
-{
-    foreach (Form f in Application.OpenForms)
-    {
-        try
+        private static void ApplyUiFixesToOpenForms()
         {
-            if (f.IsDisposed) continue;
-            if (!f.IsHandleCreated) continue;
+            foreach (Form f in Application.OpenForms)
+            {
+                try
+                {
+                    if (f.IsDisposed) continue;
+                    if (!f.IsHandleCreated) continue;
 
-            var h = f.Handle;
-            if (_iconApplied.Contains(h)) continue;
+                    var h = f.Handle;
 
-            f.Icon = _appIcon;
-            f.ShowIcon = true; // ensures it shows in the top-left/title bar icon area
-            _iconApplied.Add(h);
+                    // 1) Icon (once)
+                    if (!_iconApplied.Contains(h))
+                    {
+                        f.Icon = _appIcon;
+                        f.ShowIcon = true;
+                        _iconApplied.Add(h);
+                    }
+
+                    // 2) Clamp to working area (once, but after layout/shown)
+                    if (!_shownHooked.Contains(h))
+                    {
+                        _shownHooked.Add(h);
+                        f.Shown += (_, __) =>
+                        {
+                            try
+                            {
+                                if (f.IsDisposed) return;
+                                EnsureFormFullyVisible(f);
+                                if (f.IsHandleCreated) _clamped.Add(f.Handle);
+                            }
+                            catch { }
+                        };
+                    }
+
+                    // If already visible (dialogs can be visible immediately), clamp now once
+                    if (f.Visible && !_clamped.Contains(h))
+                    {
+                        EnsureFormFullyVisible(f);
+                        _clamped.Add(h);
+                    }
+                }
+                catch { /* ignore */ }
+            }
         }
-        catch { /* ignore */ }
-    }
-}
+
+        private static void EnsureFormFullyVisible(Form f)
+        {
+            // Don't fight the OS when maximized/minimized
+            if (f.WindowState != FormWindowState.Normal) return;
+
+            var wa = Screen.FromControl(f).WorkingArea;
+            var b = f.Bounds;
+
+            int w = Math.Min(b.Width, wa.Width);
+            int h = Math.Min(b.Height, wa.Height);
+
+            int x = b.Left;
+            int y = b.Top;
+
+            if (x < wa.Left) x = wa.Left;
+            if (y < wa.Top) y = wa.Top;
+            if (x + w > wa.Right) x = wa.Right - w;
+            if (y + h > wa.Bottom) y = wa.Bottom - h;
+
+            var nb = new Rectangle(x, y, w, h);
+            if (nb != b) f.Bounds = nb;
+        }
 
         private static void LogAndShow(string channel, Exception ex)
         {
