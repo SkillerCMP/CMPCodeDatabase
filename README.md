@@ -1,5 +1,12 @@
 # CMPCodeDatabase
-
+<p style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:0;">
+  <a href="https://github.com/SkillerCMP/CMPCodeDatabase/releases" target="_blank">
+    <img alt="GitHub Downloads (all assets, all releases)" src="https://img.shields.io/github/downloads/SkillerCMP/CMPCodeDatabase/total?style=social">
+  </a>
+  <a href="https://github.com/SkillerCMP/CMPCodeDatabase/releases/latest" target="_blank">
+    <img alt="GitHub Downloads (all assets, latest release)" src="https://img.shields.io/github/downloads/SkillerCMP/CMPCodeDatabase/latest/total?style=social">
+  </a>
+</p>
 WinForms-based code database manager for patch workflows.
 
 ## Features
