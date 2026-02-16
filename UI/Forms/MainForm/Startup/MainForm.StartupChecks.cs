@@ -41,6 +41,25 @@ namespace CMPCodeDatabase
                 {
                     using (var dlg = new MissingFilesDialog(missingFilesRoot, missingDatabase, missingTools))
                         dlg.ShowDialog(this);
+
+                    // If the user just downloaded/created the database during setup,
+                    // refresh the selector so the main window populates without requiring
+                    // a manual "ReloadDB" click.
+                    if (missingDatabase)
+                    {
+                        try
+                        {
+                            BeginInvoke((Action)(() =>
+                            {
+                                try { LoadDatabaseSelector(); }
+                                catch { /* ignore */ }
+                            }));
+                        }
+                        catch
+                        {
+                            // ignore
+                        }
+                    }
                 }
             }
             catch

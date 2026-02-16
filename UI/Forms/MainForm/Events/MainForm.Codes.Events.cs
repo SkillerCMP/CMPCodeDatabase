@@ -46,6 +46,9 @@ namespace CMPCodeDatabase
         if (!GateOnAction(node)) return;
             string name = GetCopyName(node);
 			string groupPath = GetGroupPath(node);
+		// Collector names double as Save Wizard group paths.
+		// GetGroupPath() is intentionally UI-friendly ("A / B / C"). Normalize to backslashes here.
+		groupPath = groupPath.Replace(" / ", "\\").Replace("/", "\\");
 		if (!string.IsNullOrWhiteSpace(groupPath))
 			name = groupPath + "\\" + name;
             string raw = node.Tag?.ToString() ?? string.Empty;

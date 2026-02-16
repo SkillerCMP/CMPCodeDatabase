@@ -14,7 +14,7 @@ namespace CMPCodeDatabase
         private string GetGroupPath(TreeNode codeNode)
         {
             if (codeNode == null) return string.Empty;
-            var parts = new List<string>();
+            List<string> parts = [];
 
             TreeNode cur = codeNode.Parent;
             while (cur != null)

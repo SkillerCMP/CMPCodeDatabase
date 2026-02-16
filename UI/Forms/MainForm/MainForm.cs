@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
+using System.Text.RegularExpressions;
 // ─────────────────────────────────────────────────────────────────────────────
 // CMPCodeDatabase — File: UI/Forms/MainForm/MainForm.cs
 // Purpose: UI composition, menus, and layout for the MainForm.
@@ -94,7 +95,9 @@ private Form? databaseStatsWindow;
         
         
                 // Formats hex payloads into 64-bit (16 hex chars) blocks, one per line.
-                private static readonly Regex HexWord = new Regex(@"[0-9A-Fa-f]{2,}", RegexOptions.Compiled);
+                [GeneratedRegex(@"[0-9A-Fa-f]{2,}", RegexOptions.None)]
+                private static partial Regex Rx_HexWord_Generated();
+                private static readonly Regex HexWord = Rx_HexWord_Generated();
 
 
                 // ---------- Small helpers ----------
@@ -110,7 +113,7 @@ private Form? databaseStatsWindow;
             // Dialog for Special [MOD] Amount:VAL:TYPE:ENDIAN
     
             // Dialog for Special [MOD] Amount: enforce DEC/floating ranges by byte size and prevent overflow typing
-            internal class SpecialAmountDialog : Form
+            internal partial class SpecialAmountDialog : Form
             {
                 private readonly string type;
                 private readonly string endian;
@@ -1031,7 +1034,7 @@ private void EnsureFitsTextSize(Control contentPanel, Control buttonRow)
                     }
                     else
                     {
-                        var list = new List<byte>();
+                        List<byte> list = [];
                         var temp = unsignedVal;
                         while (temp > 0)
                         {

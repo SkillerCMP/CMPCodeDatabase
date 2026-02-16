@@ -46,6 +46,39 @@ viewMenu.DropDownItems.Add(dbStatsItem);
                     viewMenu.DropDownItems.Add(calcItem);
 
                     menu.Items.Add(viewMenu);
+
+
+var databaseMenu = new ToolStripMenuItem("Database");
+
+var miVisitSite = new ToolStripMenuItem("Visit Database Site…");
+miVisitSite.Click += (s, e) => DatabaseVisitSite();
+databaseMenu.DropDownItems.Add(miVisitSite);
+
+var miOpenFolder = new ToolStripMenuItem("Open Local Database Folder…");
+miOpenFolder.Click += (s, e) => DatabaseOpenLocalFolder();
+databaseMenu.DropDownItems.Add(miOpenFolder);
+
+                    var miExportLocal = new ToolStripMenuItem("Export Local Manifest…");
+                    miExportLocal.Click += async (s, e) => await DatabaseExportLocalManifestAsync();
+                    databaseMenu.DropDownItems.Add(miExportLocal);
+
+
+databaseMenu.DropDownItems.Add(new ToolStripSeparator());
+
+var miDownloadOne = new ToolStripMenuItem("Download Database…");
+miDownloadOne.Click += async (s, e) => await DatabaseDownloadDatabaseAsync();
+databaseMenu.DropDownItems.Add(miDownloadOne);
+
+var miDownloadAll = new ToolStripMenuItem("Download All Databases");
+miDownloadAll.Click += async (s, e) => await DatabaseDownloadAllDatabasesAsync();
+databaseMenu.DropDownItems.Add(miDownloadAll);
+
+var miCheckUpdates = new ToolStripMenuItem("Check for Database Updates…");
+miCheckUpdates.Click += async (s, e) => await DatabaseCheckForUpdatesAsync();
+databaseMenu.DropDownItems.Add(miCheckUpdates);
+
+menu.Items.Add(databaseMenu);
+
             
                     // Help menu
         			var helpMenu = new ToolStripMenuItem("Help");

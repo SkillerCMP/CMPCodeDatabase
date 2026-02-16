@@ -20,14 +20,25 @@ using CMPCodeDatabase.Core.Parsing.Tokenizers;
 
 namespace CMPCodeDatabase.Core.Parsing
 {
-    public sealed class CodeTextParser : ICodeParser
+    public sealed partial class CodeTextParser : ICodeParser
     {
-        static readonly Regex GroupLine    = new(@"^\s*!(?<name>.+?)\s*$");
-        static readonly Regex SubGroupEnd  = new(@"^\s*!!\s*GroupEnd\s*$", RegexOptions.IgnoreCase);
-        static readonly Regex CodeTitle    = new(@"^\s*\+(?<name>.+?)\s*$");
-        static readonly Regex NoteOpen     = new(@"^\s*\{\s*$");
-        static readonly Regex NoteClose    = new(@"^\s*\}\s*$");
-        static readonly Regex CreditLine   = new(@"^\s*%Credits\s*:\s*(?<name>[^:]+?)(?:\s*:\s*(?<role>.+))?\s*$", RegexOptions.IgnoreCase);
+        [GeneratedRegex(@"^\s*!(?<name>.+?)\s*$")]
+        private static partial Regex GroupLineRx();
+
+        [GeneratedRegex(@"^\s*!!\s*GroupEnd\s*$", RegexOptions.IgnoreCase)]
+        private static partial Regex SubGroupEndRx();
+
+        [GeneratedRegex(@"^\s*\+(?<name>.+?)\s*$")]
+        private static partial Regex CodeTitleRx();
+
+        [GeneratedRegex(@"^\s*\{\s*$")]
+        private static partial Regex NoteOpenRx();
+
+        [GeneratedRegex(@"^\s*\}\s*$")]
+        private static partial Regex NoteCloseRx();
+
+        [GeneratedRegex(@"^\s*%Credits\s*:\s*(?<name>[^:]+?)(?:\s*:\s*(?<role>.+))?\s*$", RegexOptions.IgnoreCase)]
+        private static partial Regex CreditLineRx();
 
         public Game ParseGame(string gameId, string gameName, string folderPath, IEnumerable<(string fileName, string text)> files)
         {
@@ -36,10 +47,10 @@ namespace CMPCodeDatabase.Core.Parsing
             var currentCode  = (CodeEntry?)null;
             var currentCodeBody = new StringBuilder();
             var inTopNote = true;
-            var topNoteBuf = new List<string>();
+            List<string> topNoteBuf = [];
             var inTopNoteBlock = false;
             var inCodeNoteBlock = false;
-            var codeNoteBuf = new List<string>();
+            List<string> codeNoteBuf = [];
 
             void SealCurrentCode()
             {
@@ -64,7 +75,7 @@ namespace CMPCodeDatabase.Core.Parsing
                     if (MetadataTokenizer.TryParseMetadata(line, out var meta))
                         game.Metadata.Add(meta);
 
-                    var mCred = CreditLine.Match(line);
+                    var mCred = CreditLineRx().Match(line);
                     if (mCred.Success)
                     {
                         var name = mCred.Groups["name"].Value.Trim();
@@ -73,7 +84,7 @@ namespace CMPCodeDatabase.Core.Parsing
                         continue;
                     }
 
-                    var mg = GroupLine.Match(line);
+                    var mg = GroupLineRx().Match(line);
                     if (mg.Success)
                     {
                         SealCurrentCode();
@@ -83,14 +94,14 @@ namespace CMPCodeDatabase.Core.Parsing
                         continue;
                     }
 
-                    if (SubGroupEnd.IsMatch(line))
+                    if (SubGroupEndRx().IsMatch(line))
                     {
                         SealCurrentCode();
                         currentGroup = null;
                         continue;
                     }
 
-                    var mc = CodeTitle.Match(line);
+                    var mc = CodeTitleRx().Match(line);
                     if (mc.Success)
                     {
                         SealCurrentCode();
@@ -103,8 +114,8 @@ namespace CMPCodeDatabase.Core.Parsing
 
                     if (inTopNote)
                     {
-                        if (NoteOpen.IsMatch(line)) { topNoteBuf.Clear(); inTopNoteBlock = true; continue; }
-                        if (inTopNoteBlock && NoteClose.IsMatch(line))
+                        if (NoteOpenRx().IsMatch(line)) { topNoteBuf.Clear(); inTopNoteBlock = true; continue; }
+                        if (inTopNoteBlock && NoteCloseRx().IsMatch(line))
                         {
                             game.TopNoteHtml = string.Join("\n", topNoteBuf);
                             inTopNoteBlock = false;
@@ -119,13 +130,13 @@ namespace CMPCodeDatabase.Core.Parsing
 
                         if (currentCode.NoteHtml == null)
                         {
-                            if (!inCodeNoteBlock && NoteOpen.IsMatch(line))
+                            if (!inCodeNoteBlock && NoteOpenRx().IsMatch(line))
                             {
                                 codeNoteBuf.Clear();
                                 inCodeNoteBlock = true;
                                 continue;
                             }
-                            if (inCodeNoteBlock && NoteClose.IsMatch(line))
+                            if (inCodeNoteBlock && NoteCloseRx().IsMatch(line))
                             {
                                 currentCode.NoteHtml = string.Join("\n", codeNoteBuf);
                                 inCodeNoteBlock = false;

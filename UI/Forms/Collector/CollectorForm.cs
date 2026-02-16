@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 
+using System.ComponentModel;
 namespace CMPCodeDatabase
 {
     public partial class CollectorForm : Form
@@ -47,12 +48,17 @@ namespace CMPCodeDatabase
         private readonly Dictionary<string, string> collectorCodeMap = new(StringComparer.OrdinalIgnoreCase);
 
         // Optional integration settings (host can set these)
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string? PatchProgramExePath { get; set; } // e.g., Patcher.exe full path
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Func<string?>? ResolveDataFilePath { get; set; } // callback to get data file path at run-time
 
         // Currently selected target data file (from the small drop bar)
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string? DataFilePath { get; private set; }
-
         // Events to integrate with your external Patch Program
         public event EventHandler<PatchRequestEventArgs>? PatchRunRequested;
         public event EventHandler<PatchRequestEventArgs>? PatchPreviewRequested;

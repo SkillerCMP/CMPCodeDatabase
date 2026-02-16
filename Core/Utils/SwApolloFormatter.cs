@@ -22,10 +22,14 @@ namespace CMPCodeDatabase.Formatters
     /// - Pads odd token with "00000000".
     /// - Leaves any mixed/script lines verbatim (search/Insert Next/JSON/[Amount:...] etc.).
     /// </summary>
-    public static class SwApolloFormatter
+    public static partial class SwApolloFormatter
     {
-        private static readonly Regex OnlyHexAndWhitespace = new Regex(@"^(?:\s|[0-9A-Fa-f])+$", RegexOptions.Compiled);
-        private static readonly Regex HexToken8 = new Regex(@"[0-9A-Fa-f]{8}", RegexOptions.Compiled);
+        [GeneratedRegex(@"^(?:\s|[0-9A-Fa-f])+$", RegexOptions.None)]
+        private static partial Regex Rx_OnlyHexAndWhitespace_Generated();
+        private static readonly Regex OnlyHexAndWhitespace = Rx_OnlyHexAndWhitespace_Generated();
+        [GeneratedRegex(@"[0-9A-Fa-f]{8}", RegexOptions.None)]
+        private static partial Regex Rx_HexToken8_Generated();
+        private static readonly Regex HexToken8 = Rx_HexToken8_Generated();
         // Reflow threshold: only reformat when there are at least two 32-bit words
         private const int MinWordsForReflow = 2;
 

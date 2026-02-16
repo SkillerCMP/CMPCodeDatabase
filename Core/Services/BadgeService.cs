@@ -15,16 +15,19 @@ using CMPCodeDatabase.Core.Models;
 
 namespace CMPCodeDatabase.Core.Services
 {
-    public sealed class BadgeService : IBadgeService
+    public sealed partial class BadgeService : IBadgeService
     {
-        static readonly Regex HasModBlock = new(@"\{MOD\}|\[Amount:", RegexOptions.IgnoreCase);
-        static readonly Regex HasNote     = new(@"\{[^}]+\}", System.Text.RegularExpressions.RegexOptions.Singleline);
+        [GeneratedRegex(@"\{MOD\}|\[Amount:", RegexOptions.IgnoreCase)]
+        private static partial Regex HasModBlockRx();
+
+        [GeneratedRegex(@"\{[^}]+\}", RegexOptions.Singleline)]
+        private static partial Regex HasNoteRx();
 
         public Badges GetBadgesFor(CodeEntry code)
         {
             var flags = Badges.None;
-            if (HasModBlock.IsMatch(code.Raw)) flags |= Badges.HasMods;
-            if (!string.IsNullOrEmpty(code.NoteHtml) || HasNote.IsMatch(code.Raw)) flags |= Badges.HasNote;
+            if (HasModBlockRx().IsMatch(code.Raw)) flags |= Badges.HasMods;
+            if (!string.IsNullOrEmpty(code.NoteHtml) || HasNoteRx().IsMatch(code.Raw)) flags |= Badges.HasNote;
             return flags;
         }
     }

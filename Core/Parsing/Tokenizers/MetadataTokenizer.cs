@@ -15,28 +15,35 @@ using CMPCodeDatabase.Core.Models;
 
 namespace CMPCodeDatabase.Core.Parsing.Tokenizers
 {
-    public static class MetadataTokenizer
+    public static partial class MetadataTokenizer
     {
-        static readonly Regex HashLine   = new(@"^\s*\^1\s*(?:=\s*Hash:)?\s*(.+)$", RegexOptions.IgnoreCase);
-        static readonly Regex GameIdLine = new(@"^\s*\^2\s*(?:=\s*GameID:)?\s*(.+)$", RegexOptions.IgnoreCase);
-        static readonly Regex BareHash   = new(@"^\s*Hash\s*:\s*(.+)$", RegexOptions.IgnoreCase);
-        static readonly Regex BareGameId = new(@"^\s*GameID\s*:\s*(.+)$", RegexOptions.IgnoreCase);
+        [GeneratedRegex(@"^\s*\^1\s*(?:=\s*Hash:)?\s*(.+)$", RegexOptions.IgnoreCase)]
+        private static partial Regex HashLineRx();
+
+        [GeneratedRegex(@"^\s*\^2\s*(?:=\s*GameID:)?\s*(.+)$", RegexOptions.IgnoreCase)]
+        private static partial Regex GameIdLineRx();
+
+        [GeneratedRegex(@"^\s*Hash\s*:\s*(.+)$", RegexOptions.IgnoreCase)]
+        private static partial Regex BareHashRx();
+
+        [GeneratedRegex(@"^\s*GameID\s*:\s*(.+)$", RegexOptions.IgnoreCase)]
+        private static partial Regex BareGameIdRx();
 
         public static bool TryParseMetadata(string line, out Metadata meta)
         {
             meta = null!;
             if (string.IsNullOrWhiteSpace(line)) return false;
 
-            var m = HashLine.Match(line);
+            var m = HashLineRx().Match(line);
             if (m.Success) { meta = new Metadata("Hash", m.Groups[1].Value.Trim()); return true; }
 
-            m = GameIdLine.Match(line);
+            m = GameIdLineRx().Match(line);
             if (m.Success) { meta = new Metadata("GameID", m.Groups[1].Value.Trim()); return true; }
 
-            m = BareHash.Match(line);
+            m = BareHashRx().Match(line);
             if (m.Success) { meta = new Metadata("Hash", m.Groups[1].Value.Trim()); return true; }
 
-            m = BareGameId.Match(line);
+            m = BareGameIdRx().Match(line);
             if (m.Success) { meta = new Metadata("GameID", m.Groups[1].Value.Trim()); return true; }
 
             return false;

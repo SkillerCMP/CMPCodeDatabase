@@ -24,7 +24,7 @@ namespace CMPCodeDatabase
         /// </summary>
         internal static List<string> FindUnresolvedPlaceholders(string codeText)
         {
-            var list = new List<string>();
+            List<string> list = [];
             if (string.IsNullOrEmpty(codeText)) return list;
 
             // Reuse helpers from the other partial

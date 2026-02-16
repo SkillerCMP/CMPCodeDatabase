@@ -30,8 +30,8 @@ namespace CMPCodeDatabase
                     dt.Columns.Add("Game ID");
                     dt.Columns.Add("Hash");
 
-                    var ids = new List<string>();
-                    var hashes = new List<string>();
+                    List<string> ids = [];
+                    List<string> hashes = [];
 
                     foreach (Match m in Regex.Matches(text, @"^\s*\^1\s*=\s*Hash:\s*(.+)\s*$", RegexOptions.Multiline | RegexOptions.IgnoreCase))
                         hashes.AddRange(SplitCsv(m.Groups[1].Value));
@@ -71,7 +71,7 @@ namespace CMPCodeDatabase
                 private string? ParseTopGameNoteHtml(string text)
                 {
                     var lines = (text ?? "").Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.None);
-                    var buf = new List<string>();
+                    List<string> buf = [];
                     bool anyReal = false;
 
                     foreach (var raw in lines)

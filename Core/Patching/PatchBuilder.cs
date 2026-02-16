@@ -45,7 +45,7 @@ namespace CMPCodeDatabase.Patching
         /// </summary>
         public static string BuildSavePatch(IEnumerable<KeyValuePair<string, string>> items, bool padPairs = true, string? targetPath = null)
         {
-            if (items is null) throw new ArgumentNullException(nameof(items));
+            ArgumentNullException.ThrowIfNull(items);
             var text = ComposeSavePatchText(items, padPairs);
             return WriteSavePatch(text, targetPath);
         }
@@ -55,7 +55,7 @@ namespace CMPCodeDatabase.Patching
         /// </summary>
         public static string BuildSavePatch(IEnumerable<(string Name, string Code)> items, bool padPairs = true, string? targetPath = null)
         {
-            if (items is null) throw new ArgumentNullException(nameof(items));
+            ArgumentNullException.ThrowIfNull(items);
             return BuildSavePatch(items.Select(t => new KeyValuePair<string, string>(t.Name, t.Code)), padPairs, targetPath);
         }
 
@@ -64,7 +64,7 @@ namespace CMPCodeDatabase.Patching
         /// </summary>
         public static string ComposeSavePatchText(IEnumerable<KeyValuePair<string, string>> items, bool padPairs = true)
         {
-            if (items is null) throw new ArgumentNullException(nameof(items));
+            ArgumentNullException.ThrowIfNull(items);
 
             var sb = new StringBuilder(4096);
             foreach (var kv in items)

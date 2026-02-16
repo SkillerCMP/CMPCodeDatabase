@@ -20,7 +20,7 @@ namespace CMPCodeDatabase
     {
         private void CopyChecked()
         {
-            var blocks = new List<string>();
+            List<string> blocks = [];
             for (int i = 0; i < clbCollector.Items.Count; i++)
             {
                 if (!clbCollector.GetItemChecked(i)) continue;
@@ -35,7 +35,7 @@ namespace CMPCodeDatabase
 
         private void CopyAll()
         {
-            var blocks = new List<string>();
+            List<string> blocks = [];
             foreach (var obj in clbCollector.Items)
             {
                 string name = obj?.ToString() ?? string.Empty;

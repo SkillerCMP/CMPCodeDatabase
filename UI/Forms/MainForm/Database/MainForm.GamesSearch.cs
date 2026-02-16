@@ -31,7 +31,7 @@ namespace CMPCodeDatabase
             public int ImageIndex;
             public int SelectedImageIndex;
         }
-        private List<GameEntry> _allGames = new List<GameEntry>();
+        private List<GameEntry> _allGames = [];
         private int _baseSig = 0;
         private bool _filteringInternal = false;
 

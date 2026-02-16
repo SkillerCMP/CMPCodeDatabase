@@ -45,7 +45,7 @@ namespace CMPCodeDatabase
             {
                 var name = kv.Key?.Trim() ?? "PATCH";
                 var code = kv.Value ?? string.Empty;
-                var keptLines = new List<string>();
+                List<string> keptLines = [];
 
                 using (var sr = new StringReader(code))
                 {

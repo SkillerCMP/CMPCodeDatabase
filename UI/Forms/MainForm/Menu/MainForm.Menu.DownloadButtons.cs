@@ -1,13 +1,13 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// CMPCodeDatabase — File: UI/Forms/MainForm/Menu/MainForm.Menu.DownloadButtons.cs
-// Purpose: UI composition, menus, and layout for the MainForm.
-// Notes:
-//  • Documentation-only header added (no behavioral changes).
-//  • Keep UI hooks intact: EnsureDownloadButtons(), EnsureStartupChecks(), EnsureCloudMenu().
-//  • Database root resolution is centralized (ResolveDatabasesRoot / helpers).
-//  • Startup creates: Files\, Files\Database\, Files\Tools\ (if missing).
-//  • 'ReloadDB' clears trees and calls LoadDatabaseSelector().
-// Added: 2025-09-12
+// CMPCodeDatabase — File: URL/UI/Forms/MainForm/Menu/MainForm.Menu.DownloadButtons.cs
+// Purpose: MainForm toolbar items for database/tools download shortcuts.
+//
+// Change (QOL, no functional DB logic change):
+//  • Removes the legacy top-bar "Download Database" ToolStrip button.
+//  • Keeps "Download Tools" button (unchanged behavior).
+//  • Safely strips any existing Download Database items if found.
+//
+// This file intentionally only touches the toolbar/button wiring.
 // ─────────────────────────────────────────────────────────────────────────────
 
 using System;
@@ -22,40 +22,92 @@ namespace CMPCodeDatabase
     {
         private void EnsureDownloadButtons()
         {
-            // Reuse/create a ToolStrip at top
-            var tool = this.Controls.OfType<ToolStrip>().FirstOrDefault();
+            // Find an existing top ToolStrip; otherwise create one.
+            var tool = this.Controls.OfType<ToolStrip>()
+                .FirstOrDefault(ts => ts.Dock == DockStyle.Top)
+                ?? this.Controls.OfType<ToolStrip>().FirstOrDefault();
+
             if (tool == null)
             {
-                tool = new ToolStrip { Dock = DockStyle.Top, GripStyle = ToolStripGripStyle.Hidden, RenderMode = ToolStripRenderMode.System };
+                tool = new ToolStrip
+                {
+                    Dock = DockStyle.Top,
+                    GripStyle = ToolStripGripStyle.Hidden,
+                    RenderMode = ToolStripRenderMode.System,
+                    Name = "mainToolStrip"
+                };
+
                 this.Controls.Add(tool);
                 tool.BringToFront();
             }
 
-            if (!tool.Items.OfType<ToolStripButton>().Any(b => b.Name == "btnDownloadDatabase"))
+            // Remove legacy "Download Database" item(s) if present.
+            foreach (var item in tool.Items.Cast<ToolStripItem>().ToArray())
             {
-                var btnDb = new ToolStripButton("Download Database") { Name = "btnDownloadDatabase", DisplayStyle = ToolStripItemDisplayStyle.Text };
-                btnDb.Click += (s, e) =>
+                var name = item.Name ?? string.Empty;
+                var text = item.Text ?? string.Empty;
+
+                if (name.Equals("btnDownloadDatabase", StringComparison.OrdinalIgnoreCase) ||
+                    name.Equals("btnDb", StringComparison.OrdinalIgnoreCase) ||
+                    text.Equals("Download Database", StringComparison.OrdinalIgnoreCase) ||
+                    text.Replace("&", string.Empty).Equals("Download Database", StringComparison.OrdinalIgnoreCase))
                 {
-                    var url = AppSettings.Instance.DatabaseDownloadUrl;
-                    if (string.IsNullOrWhiteSpace(url)) url = "https://drive.google.com/";
-                    try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
-                    catch { MessageBox.Show("Could not open the database link."); }
-                };
-                tool.Items.Add(btnDb);
+                    tool.Items.Remove(item);
+                    item.Dispose();
+                }
             }
 
-            if (!tool.Items.OfType<ToolStripButton>().Any(b => b.Name == "btnDownloadTools"))
+            // Ensure "Download Tools" exists.
+            if (!tool.Items.OfType<ToolStripItem>().Any(i =>
+                    (i.Name ?? string.Empty).Equals("btnDownloadTools", StringComparison.OrdinalIgnoreCase) ||
+                    (i.Text ?? string.Empty).Replace("&", string.Empty)
+                        .Equals("Download Tools", StringComparison.OrdinalIgnoreCase)))
             {
-                var btnTools = new ToolStripButton("Download Tools") { Name = "btnDownloadTools", DisplayStyle = ToolStripItemDisplayStyle.Text };
+                var btnTools = new ToolStripButton("Download Tools")
+                {
+                    Name = "btnDownloadTools",
+                    DisplayStyle = ToolStripItemDisplayStyle.Text,
+                    AutoToolTip = true,
+                    ToolTipText = "Open the tools download page"
+                };
+
                 btnTools.Click += (s, e) =>
                 {
                     var url = AppSettings.Instance.ToolsDownloadUrl;
-                    if (string.IsNullOrWhiteSpace(url)) url = "https://example.com/your-tool-download";
-                    try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
-                    catch { MessageBox.Show("Could not open the tools link."); }
+                    if (string.IsNullOrWhiteSpace(url))
+                        url = "https://github.com/bucanero/apollo-lib/releases";
+
+                    try
+                    {
+                        Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+                    }
+                    catch
+                    {
+                        MessageBox.Show("Could not open the tools link.", "CMPCodeDatabase",
+                            MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
                 };
-                tool.Items.Add(new ToolStripSeparator());
+
                 tool.Items.Add(btnTools);
+            }
+
+            // Clean up redundant separators (leading/trailing/duplicates).
+            for (int i = tool.Items.Count - 1; i >= 0; i--)
+            {
+                if (tool.Items[i] is not ToolStripSeparator)
+                    continue;
+
+                bool isLeading = i == 0;
+                bool isTrailing = i == tool.Items.Count - 1;
+                bool prevIsSep = i > 0 && tool.Items[i - 1] is ToolStripSeparator;
+                bool nextIsSep = i < tool.Items.Count - 1 && tool.Items[i + 1] is ToolStripSeparator;
+
+                if (isLeading || isTrailing || prevIsSep || nextIsSep)
+                {
+                    var sep = tool.Items[i];
+                    tool.Items.RemoveAt(i);
+                    sep.Dispose();
+                }
             }
         }
     }

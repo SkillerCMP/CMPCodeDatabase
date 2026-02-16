@@ -28,8 +28,8 @@ namespace CMPCodeDatabase
                 try { EnsureLogPanel(); } catch { }
 
                 // Ensure scrollbars
-                try { if (_rtbLog != null) _rtbLog.ScrollBars = RichTextBoxScrollBars.Both; } catch { }
-                try { if (clbCollector != null) clbCollector.HorizontalScrollbar = true; } catch { }
+                try { _rtbLog?.ScrollBars = RichTextBoxScrollBars.Both; } catch { }
+                try { clbCollector?.HorizontalScrollbar = true; } catch { }
 
                 // Compute a *minimum* width from probe text (do not hard-lock window size).
                 var useFont = (clbCollector != null ? clbCollector.Font : this.Font);

@@ -35,7 +35,7 @@ namespace CMPCodeDatabase.Core.Services
             if (string.IsNullOrWhiteSpace(rootFolder) || !Directory.Exists(rootFolder))
                 return Task.FromResult((IReadOnlyList<Game>)Array.Empty<Game>());
 
-            var games = new List<Game>();
+            List<Game> games = [];
             // Any folder with *.txt is a game folder; recurse to support vendor/category levels.
             foreach (var dir in Directory.GetDirectories(rootFolder, "*", SearchOption.AllDirectories))
             {

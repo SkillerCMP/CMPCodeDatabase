@@ -47,11 +47,11 @@ namespace CMPCodeDatabase
         {
             var run = FindByTextDeep<Button>(this, "Run Patch (Checked)") ??
                       FindByTextDeep<Button>(this, "Run Patch");
-            if (run != null) run.Text = "Run Patch";
+            run?.Text = "Run Patch";
 
             var prev = FindByTextDeep<Button>(this, "Preview (Checked)") ??
                        FindByTextDeep<Button>(this, "Preview");
-            if (prev != null) prev.Text = "Preview";
+            prev?.Text = "Preview";
         }
 
         private void MoveRunAndPatcherBarsIntoLogPanel()
@@ -132,7 +132,7 @@ namespace CMPCodeDatabase
             if (opsPanel == null) return;
 
             var invert = opsPanel.Controls.OfType<Button>().FirstOrDefault(b => b.Text == "Invert");
-            if (invert != null) invert.Visible = false;
+            invert?.Visible = false;
 
             foreach (var cap in new[] { "Copy Checked", "Copy All", "Clear" })
             {
@@ -150,7 +150,7 @@ namespace CMPCodeDatabase
             var restoreBtn = FindByTextDeep<Button>(this, "Restore Backup");
             var chk = FindCheckboxNearBottom();
 
-            if (chk != null) chk.Checked = true;
+            chk?.Checked = true;
 
             if (openBtn != null && restoreBtn != null && chk != null)
             {

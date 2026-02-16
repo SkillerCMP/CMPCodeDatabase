@@ -77,7 +77,8 @@ namespace CMPCodeDatabase.UI.Controls
 
             Controls.Add(_grid);
         }
-
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public IEnumerable<string> CommonRoles { get; set; } = new[]
         {
             "Codes", "IDS", "Porting", "Testing", "Docs", "Research", "Tools", "Maintainer", "Translation"

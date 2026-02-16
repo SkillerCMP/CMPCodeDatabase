@@ -13,7 +13,9 @@
 using System;
 using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using CMPCodeDatabase.Core.Settings;
 
@@ -66,17 +68,73 @@ namespace CMPCodeDatabase.UI.Dialogs
                 Text = instructionsText
             };
 
-            var btnDb = new Button { Text = "Open Database Page", Left = 16, Top = 250, Width = 180 };
+            var btnDb = new Button { Text = "Database-Download", Left = 16, Top = 250, Width = 180 };
             var btnTools = new Button { Text = "Open Tools Page", Left = 204, Top = 250, Width = 160 };
             var btnClose = new Button { Text = "Close", Left = 500, Top = 250, Width = 100, DialogResult = DialogResult.OK };
 
             btnDb.Click += (s, e) =>
-            {
-                var url = AppSettings.Instance.DatabaseDownloadUrl;
-                if (string.IsNullOrWhiteSpace(url)) url = "https://drive.google.com/";
-                try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
-                catch { MessageBox.Show(this, "Could not open the database page."); }
-            };
+{
+    // Treat the "Database" button as a small dropdown menu.
+    var ctx = new ContextMenuStrip();
+
+    ctx.Items.Add("Visit Database Site…", null, (_, __) =>
+    {
+        var url = AppSettings.Instance.DatabaseDownloadUrl;
+        if (string.IsNullOrWhiteSpace(url)) url = "https://drive.google.com/";
+        try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
+        catch { MessageBox.Show(this, "Could not open the database site."); }
+    });
+
+    ctx.Items.Add("Open Local Database Folder…", null, (_, __) =>
+    {
+        var root = DatabaseManager.GetLocalDatabaseRoot();
+        try
+        {
+            Directory.CreateDirectory(root);
+            Process.Start(new ProcessStartInfo(root) { UseShellExecute = true });
+        }
+        catch
+        {
+            MessageBox.Show(this, "Could not open the local database folder.");
+        }
+    });
+
+    ctx.Items.Add(new ToolStripSeparator());
+
+    ctx.Items.Add("Download Database…", null, async (_, __) =>
+    {
+        using var picker = new DatabasePickerDialog();
+        if (picker.ShowDialog(this) != DialogResult.OK) return;
+
+        if (picker.SelectedDatabase is null) return;
+        await DatabaseManager.DownloadDatabasesAsync(this, new[] { picker.SelectedDatabase }, promptBeforeDownloading: false);
+    });
+
+    ctx.Items.Add("Download All Databases", null, async (_, __) =>
+    {
+        var confirm = MessageBox.Show(this,
+            "This will download ALL available databases into your local Files\\Database folder.\n\nContinue?",
+            "Download All Databases",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Question);
+
+        if (confirm != DialogResult.Yes) return;
+        await DatabaseManager.DownloadAllDatabasesAsync(this);
+    });
+
+    ctx.Items.Add("Check for Database Updates…", null, async (_, __) =>
+    {
+        using var upd = new DatabaseUpdatesDialog();
+        if (upd.ShowDialog(this) != DialogResult.OK) return;
+
+        var selected = upd.SelectedDatabasesToUpdate;
+        if (selected.Length == 0) return;
+
+        await DatabaseManager.DownloadDatabasesAsync(this, selected, promptBeforeDownloading: false);
+    });
+
+    ctx.Show(btnDb, new Point(0, btnDb.Height));
+};
 
             btnTools.Click += (s, e) =>
             {

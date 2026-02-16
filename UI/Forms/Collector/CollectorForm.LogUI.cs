@@ -104,7 +104,7 @@ EnsureLogPanel();
             {
                 // Hide "Invert"
                 var invert = opsPanel.Controls.OfType<Button>().FirstOrDefault(b => b.Text == "Invert");
-                if (invert != null) invert.Visible = false;
+                invert?.Visible = false;
 
                 if (bottomButtons != null)
                 {

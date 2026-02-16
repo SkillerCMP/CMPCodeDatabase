@@ -6,15 +6,16 @@ using System.Windows.Forms;
 
 namespace CMPCodeDatabase.SpecialMods
 {
-    internal static class JokerMod
+    internal static partial class JokerMod
     {
         // Allow ALL as a platform to expose the dropdown; otherwise lock the dialog to that platform
-        private static readonly Regex JokerToken = new(@"\[(?:Joker|JKR):(?<plat>PS2|GC|Wii|GBA|ALL)(?::(?<mods>[^\]]+))?\]",
-            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        [GeneratedRegex(@"\[(?:Joker|JKR):(?<plat>PS2|GC|Wii|GBA|ALL)(?::(?<mods>[^\]]+))?\]", RegexOptions.IgnoreCase)]
+        private static partial Regex JokerTokenRx();
+
 
         /// <summary>Finds all Joker tokens in a string.</summary>
         public static IEnumerable<Match> FindTokens(string text)
-            => JokerToken.Matches(text ?? string.Empty).Cast<Match>();
+            => JokerTokenRx().Matches(text ?? string.Empty).Cast<Match>();
 
         /// <summary>Resolve every [Joker:*] token in the RichTextBox.</summary>
         public static void BatchResolveRichTextBox(IWin32Window owner, RichTextBox rtb, bool keepTokenAppend = false)

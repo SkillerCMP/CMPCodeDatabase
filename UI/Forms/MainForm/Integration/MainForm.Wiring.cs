@@ -115,8 +115,7 @@ namespace CMPCodeDatabase
                 var text = rtb.Text;
                 hasToken = CMPCodeDatabase.SpecialMods.JokerMod.FindTokens(text).Any();
             }
-            if (_ctxOpenJokerItem != null)
-                _ctxOpenJokerItem.Enabled = hasToken;
+            _ctxOpenJokerItem?.Enabled = hasToken;
         }
 
         // Replace with your actual accessor if your editor is wrapped

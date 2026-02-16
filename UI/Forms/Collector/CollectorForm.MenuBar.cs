@@ -22,12 +22,12 @@ namespace CMPCodeDatabase
             try
             {
                 // Hide the old buttons the user asked to remove
-                if (btnSelectAll != null)   btnSelectAll.Visible   = false;
-                if (btnSelectNone != null)  btnSelectNone.Visible  = false;
-                if (btnInvert != null)      btnInvert.Visible      = false;
-                if (btnCopyAll != null)     btnCopyAll.Visible     = false;
-                if (btnCopyChecked != null) btnCopyChecked.Visible = false;
-                if (btnClear != null)       btnClear.Visible       = false;
+                btnSelectAll?.Visible = false;
+                btnSelectNone?.Visible = false;
+                btnInvert?.Visible = false;
+                btnCopyAll?.Visible = false;
+                btnCopyChecked?.Visible = false;
+                btnClear?.Visible = false;
             }
             catch { /* missing fields are OK */ }
 

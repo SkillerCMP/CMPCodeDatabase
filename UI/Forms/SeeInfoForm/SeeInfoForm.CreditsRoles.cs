@@ -95,7 +95,7 @@ namespace CMPCodeDatabase
                 var r = token.Substring(colon + 1).Trim();
                 return (n, string.IsNullOrWhiteSpace(r) ? null : r);
             }
-            var pm = System.Text.RegularExpressions.Regex.Match(token, @"^(?<n>.+?)\s*\((?<r>.+?)\)\s*$");
+            var pm = Regex.Match(token, @"^(?<n>.+?)\s*\((?<r>.+?)\)\s*$");
             if (pm.Success)
             {
                 var n = pm.Groups["n"].Value.Trim();
@@ -104,17 +104,17 @@ namespace CMPCodeDatabase
             }
             return (token, null);
         }
-    private void PopulateCredits(Dictionary<string, int> counts, Dictionary<string, string> rolesMap)
+        private void PopulateCredits(Dictionary<string, int> counts, Dictionary<string, string> rolesMap)
         {
             listCredits.BeginUpdate();
             listCredits.Items.Clear();
             foreach (var kvp in counts.OrderByDescending(k => k.Value).ThenBy(k => k.Key, StringComparer.OrdinalIgnoreCase))
             {
-                var lvi = new ListViewItem(kvp.Key);
-                lvi.SubItems.Add(kvp.Value.ToString());
-                rolesMap.TryGetValue(kvp.Key, out var roles);
-                lvi.SubItems.Add(roles ?? string.Empty);
-                listCredits.Items.Add(lvi);
+            var lvi = new ListViewItem(kvp.Key);
+            lvi.SubItems.Add(kvp.Value.ToString());
+            rolesMap.TryGetValue(kvp.Key, out var roles);
+            lvi.SubItems.Add(roles ?? string.Empty);
+            listCredits.Items.Add(lvi);
             }
             listCredits.ListViewItemSorter = new ListViewItemComparer(1, false);
             listCredits.Tag = Tuple.Create(1, false);

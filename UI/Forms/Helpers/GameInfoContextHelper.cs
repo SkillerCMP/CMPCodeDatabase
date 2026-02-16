@@ -31,8 +31,8 @@ namespace CMPCodeDatabase
         /// </param>
         public static void Attach(TreeView gamesTree, Func<TreeNode, string?> resolvePathForNode)
         {
-            if (gamesTree == null) throw new ArgumentNullException(nameof(gamesTree));
-            if (resolvePathForNode == null) throw new ArgumentNullException(nameof(resolvePathForNode));
+            ArgumentNullException.ThrowIfNull(gamesTree);
+            ArgumentNullException.ThrowIfNull(resolvePathForNode);
 
             var cm = new ContextMenuStrip();
             var seeInfo = new ToolStripMenuItem("See info");

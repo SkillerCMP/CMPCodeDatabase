@@ -11,15 +11,20 @@ namespace CMPCodeDatabase
     {
         private string? _currentApplyingName;
 
+        [GeneratedRegex(@"Applying\s*\[(.*?)\]", RegexOptions.IgnoreCase)]
+        private static partial Regex Rx_rxApplying_Generated();
         private static readonly Regex rxApplying =
-            new Regex(@"Applying\s*\[(.*?)\]", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+            Rx_rxApplying_Generated();
 
+        [GeneratedRegex(@"(ERROR!|^[-\s]*ERROR\b|Error:|Can't\s+load|SEARCH\s+PATTERN\s+NOT\s+FOUND)", RegexOptions.IgnoreCase)]
+        private static partial Regex Rx_rxError_Generated();
         private static readonly Regex rxError =
-            new Regex(@"(ERROR!|^[-\s]*ERROR\b|Error:|Can't\s+load|SEARCH\s+PATTERN\s+NOT\s+FOUND)",
-                      RegexOptions.IgnoreCase | RegexOptions.Compiled);
+            Rx_rxError_Generated();
 
+        [GeneratedRegex(@"\b(WARN|WARNING)\b", RegexOptions.IgnoreCase)]
+        private static partial Regex Rx_rxWarn_Generated();
         private static readonly Regex rxWarn =
-            new Regex(@"\b(WARN|WARNING)\b", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+            Rx_rxWarn_Generated();
 
         private Color ClassifyLogAndUpdateStatus(string text)
         {

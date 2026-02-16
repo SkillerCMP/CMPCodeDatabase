@@ -65,15 +65,15 @@ namespace CMPCodeDatabase
                 var miAddChecked  = codesContextMenu.Items["mnuAddCheckedToCollector"];
                 var miCopyToColl  = codesContextMenu.Items["mnuCopyToCollector"];
 
-                if (miSelectMod != null)  miSelectMod.Visible  = modsAvailableForNode;
-                if (miShowNote  != null)  miShowNote.Visible   = notesAvailableForNode;
+                miSelectMod?.Visible = modsAvailableForNode;
+                miShowNote?.Visible = notesAvailableForNode;
 
                 // Enable single-item add only if selected node has code text
-                if (miCopyToColl != null) miCopyToColl.Enabled = (node?.Tag != null) &&
+                miCopyToColl?.Enabled = (node?.Tag != null) &&
                                                                  !string.IsNullOrWhiteSpace(node.Tag.ToString());
 
                 // Enable batch add only if ANY checked code exists in the tree
-                if (miAddChecked != null) miAddChecked.Enabled = AnyCheckedCodeNodes();
+                miAddChecked?.Enabled = AnyCheckedCodeNodes();
             }
         }
 
@@ -95,7 +95,7 @@ namespace CMPCodeDatabase
         private int AddAllCheckedToCollector()
         {
             if (treeCodes == null) return 0;
-            var list = new List<TreeNode>();
+            List<TreeNode> list = [];
             foreach (TreeNode n in treeCodes.Nodes)
                 CollectCheckedCodeNodes(n, list);
 

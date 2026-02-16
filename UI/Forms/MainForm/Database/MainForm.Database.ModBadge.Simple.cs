@@ -5,14 +5,18 @@ namespace CMPCodeDatabase
 {
     public partial class MainForm
     {
-        private static readonly Regex __starSimpleScan = new(@"\[(?<inner>[^\[\]]+)\]", RegexOptions.Compiled);
+        
+        // Simple scan regex for bracketed placeholders like: [Amount:...], [Joker:...], [STAR:...]
+        private static readonly Regex _starSimpleScanRx = new(@"\[(?<inner>[^\[\]]+)\]", RegexOptions.CultureInvariant);
 
-        // Simple hard-allow scan (Amount, Joker/JKR, STAR) — mirrors Amount behavior
+        private static Regex StarSimpleScanRx() => _starSimpleScanRx;
+
+// Simple hard-allow scan (Amount, Joker/JKR, STAR) — mirrors Amount behavior
         private static bool ShouldShowModBadgeSimple(string template)
         {
             if (string.IsNullOrWhiteSpace(template)) return false;
 
-            foreach (Match m in __starSimpleScan.Matches(template))
+            foreach (Match m in StarSimpleScanRx().Matches(template))
             {
                 var inner = m.Groups["inner"].Value.Trim();
                 if (string.IsNullOrEmpty(inner)) continue;
