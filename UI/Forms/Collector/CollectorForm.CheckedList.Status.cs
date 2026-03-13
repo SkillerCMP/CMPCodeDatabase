@@ -9,7 +9,7 @@ namespace CMPCodeDatabase
 {
     // Prefix style: items get "✖ " (error) or "⚠ " (warn) added to the item text.
     // Owner-draw paints ONLY the prefix in color (✖ red, ⚠ orange); the rest stays default.
-    public partial class CollectorForm : Form
+    public partial class CollectorControl : UserControl
     {
         private enum CodeStatus { None, Warn, Error }
         private readonly Dictionary<int, CodeStatus> _statusByIndex = new();

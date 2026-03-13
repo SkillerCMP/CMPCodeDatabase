@@ -7,7 +7,7 @@ namespace CMPCodeDatabase
 {
     // Parse log lines; detect errors/warnings and mark the corresponding code in the list.
     // NOTE: No "OK" (success) handling—per request.
-    public partial class CollectorForm : Form
+    public partial class CollectorControl : UserControl
     {
         private string? _currentApplyingName;
 

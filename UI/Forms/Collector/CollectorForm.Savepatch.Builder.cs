@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// CMPCodeDatabase — File: UI/Forms/Collector/CollectorForm.Savepatch.Builder.cs
+// CMPCodeDatabase — File: UI/Forms/Collector/CollectorControl.Savepatch.Builder.cs
 // Purpose: UI composition, menus, and layout for the MainForm.
 // Notes:
 //  • Documentation-only header added (no behavioral changes).
@@ -21,7 +21,7 @@ using System.Windows.Forms;
 
 namespace CMPCodeDatabase
 {
-    public partial class CollectorForm : Form
+    public partial class CollectorControl : UserControl
     {
         private string BuildTempSavepatch(IReadOnlyList<KeyValuePair<string,string>> entries, out string contentOut)
         {
@@ -71,8 +71,12 @@ namespace CMPCodeDatabase
                         var mG = rxGame.Match(raw);
                         if (mG.Success)
                         {
-                            var g = mG.Groups[1].Value.Trim();
-                            if (seenGameIds.Add(g)) gameIds.AddLast(g);
+                            // Accept either a single ID or a CSV/whitespace list on one line.
+                            foreach (Match m in Regex.Matches(mG.Groups[1].Value, @"\b[A-Za-z]{4}\d{5}\b"))
+                            {
+                                var id = m.Value.Trim().ToUpperInvariant();
+                                if (seenGameIds.Add(id)) gameIds.AddLast(id);
+                            }
                             continue;
                         }
 
@@ -105,8 +109,25 @@ namespace CMPCodeDatabase
                 sb.AppendLine(";CMP Collector Patch");
             sb.AppendLine("; Built By CMP Collector");
             if (!string.IsNullOrWhiteSpace(__dbName)) sb.AppendLine($"; Database: {__dbName}");
-foreach (var h in hashes) sb.AppendLine("^1 = Hash: " + h);
-            foreach (var g in gameIds) sb.AppendLine("^2 = GameID: " + g);
+            // Active game IDs for Save Wizard export context (comment-only; not CMP metadata)
+            string? __gameIdsCsv = null;
+            try
+            {
+                foreach (Form f in Application.OpenForms)
+                    if (f is MainForm mf) { __gameIdsCsv = mf.CurrentGameIdsCsv; break; }
+            }
+            catch { /* ignore */ }
+
+            string? __headerGameIds = null;
+            if (!string.IsNullOrWhiteSpace(__gameIdsCsv))
+                __headerGameIds = __gameIdsCsv!.Trim();
+            else if (gameIds.Count > 0)
+                __headerGameIds = string.Join(",", gameIds);
+
+            if (!string.IsNullOrWhiteSpace(__headerGameIds))
+                sb.AppendLine($"; Game ID: {__headerGameIds}");
+
+            foreach (var h in hashes) sb.AppendLine("^1 = Hash: " + h);
             foreach (var f in files) sb.AppendLine("^4 = FILE: " + f);
             sb.AppendLine();
             sb.Append(sectionBuilder.ToString());

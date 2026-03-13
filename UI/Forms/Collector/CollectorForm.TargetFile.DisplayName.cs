@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// CMPCodeDatabase — File: UI/Forms/Collector/CollectorForm.TargetFile.DisplayName.cs
+// CMPCodeDatabase — File: UI/Forms/Collector/CollectorControl.TargetFile.DisplayName.cs
 // Purpose: UI composition, menus, and layout for the MainForm.
 // Notes:
 //  • Documentation-only header added (no behavioral changes).
@@ -18,9 +18,9 @@ namespace CMPCodeDatabase
 {
     /// <summary>
     /// Filename-only display for the target-file textbox.
-    /// Exposes TryWireFilenameOnly() called from CollectorForm.Wiring.
+    /// Exposes TryWireFilenameOnly() called from CollectorControl.Wiring.
     /// </summary>
-    public partial class CollectorForm : Form
+    public partial class CollectorControl : UserControl
     {
         private bool _filenameOnlyInitDone;
         private bool _suppressDataFileTextChange;

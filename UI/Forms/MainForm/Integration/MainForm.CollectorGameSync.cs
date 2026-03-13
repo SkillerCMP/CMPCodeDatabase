@@ -58,8 +58,10 @@ namespace CMPCodeDatabase
 
             try
             {
-                if (collectorWindow != null && !collectorWindow.IsDisposed)
-                    collectorWindow.SetActiveGame(key);
+            if (CMPCodeDatabase.Core.Settings.AppSettings.Instance.UseTabbedPreviewCollector && collectorTab != null && !collectorTab.IsDisposed)
+                collectorTab.SetActiveGame(key);
+            else if (collectorWindow != null && !collectorWindow.IsDisposed)
+                collectorWindow.SetActiveGame(key);
             }
             catch { /* non-fatal */ }
         }

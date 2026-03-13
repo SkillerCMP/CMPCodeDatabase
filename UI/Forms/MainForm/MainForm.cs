@@ -75,6 +75,11 @@ namespace CMPCodeDatabase
 
                 // Collector & Calculator windows
                 private CollectorForm? collectorWindow;
+                // Tabbed layout (optional): embeds CollectorControl beside Code Preview
+                private TabControl? tabPreviewCollector;
+                private TabPage? tabPreview;
+                private TabPage? tabCollector;
+                private CollectorControl? collectorTab;
                 private EnhancedCalculatorForm? calculatorWindow;
 private Form? databaseStatsWindow;
                 // Fallback collector storage when collector window is closed

@@ -5,7 +5,7 @@ using System.Windows.Forms;
 
 namespace CMPCodeDatabase
 {
-    public partial class CollectorForm : Form
+    public partial class CollectorControl : UserControl
     {
         private static bool _shownPnachHelpThisSession;
 

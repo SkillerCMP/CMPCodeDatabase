@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// CMPCodeDatabase — File: UI/Forms/Collector/CollectorForm.Backups.cs
+// CMPCodeDatabase — File: UI/Forms/Collector/CollectorControl.Backups.cs
 // Purpose: UI composition, menus, and layout for the MainForm.
 // Notes:
 //  • Documentation-only header added (no behavioral changes).
@@ -22,9 +22,9 @@ namespace CMPCodeDatabase
 {
     /// <summary>
     /// Backup UI + logic integrated into Collector.
-    /// Exposes TryInitBackupsUI() called from CollectorForm.Wiring.
+    /// Exposes TryInitBackupsUI() called from CollectorControl.Wiring.
     /// </summary>
-    public partial class CollectorForm : Form
+    public partial class CollectorControl : UserControl
     {
         private Panel? _backupBar;
         private CheckBox? _chkBackup;
@@ -55,7 +55,7 @@ namespace CMPCodeDatabase
         {
             try
             {
-                var mi = typeof(CollectorForm).GetMethod("EnsureLogPanel", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                var mi = typeof(CollectorControl).GetMethod("EnsureLogPanel", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
                 mi?.Invoke(this, null);
             }
             catch { /* ignore */ }
@@ -244,7 +244,7 @@ namespace CMPCodeDatabase
         {
             try
             {
-                var f = typeof(CollectorForm).GetField("_activeGameKey", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                var f = typeof(CollectorControl).GetField("_activeGameKey", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
                 var v = f?.GetValue(this) as string;
                 if (!string.IsNullOrWhiteSpace(v)) return v;
             }

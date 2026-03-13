@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// CMPCodeDatabase — File: UI/Forms/Collector/CollectorForm.PatchRunner.cs
+// CMPCodeDatabase — File: UI/Forms/Collector/CollectorControl.PatchRunner.cs
 // Purpose: UI composition, menus, and layout for the MainForm.
 // Notes:
 //  • Documentation-only header added (no behavioral changes).
@@ -19,7 +19,7 @@ using System.Windows.Forms;
 
 namespace CMPCodeDatabase
 {
-    public partial class CollectorForm : Form
+    public partial class CollectorControl : UserControl
     {
         private sealed class PatcherResult
         {

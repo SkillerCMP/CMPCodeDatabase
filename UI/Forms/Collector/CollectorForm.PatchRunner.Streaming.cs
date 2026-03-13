@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// CMPCodeDatabase — File: UI/Forms/Collector/CollectorForm.PatchRunner.Streaming.cs
+// CMPCodeDatabase — File: UI/Forms/Collector/CollectorControl.PatchRunner.Streaming.cs
 // Purpose: UI composition, menus, and layout for the MainForm.
 // Notes:
 //  • Documentation-only header added (no behavioral changes).
@@ -16,7 +16,7 @@ using System.Threading.Tasks;
 
 namespace CMPCodeDatabase
 {
-    public partial class CollectorForm
+    public partial class CollectorControl
     {
         private static string Q(string? s) => string.IsNullOrEmpty(s) ? "\"\"" : $"\"{s}\"";
 

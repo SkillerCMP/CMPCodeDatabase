@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// CMPCodeDatabase — File: UI/Forms/Collector/CollectorForm.Wiring.cs
+// CMPCodeDatabase — File: UI/Forms/Collector/CollectorControl.Wiring.cs
 // Purpose: UI composition, menus, and layout for the MainForm.
 // Notes:
 //  • Documentation-only header added (no behavioral changes).
@@ -19,7 +19,7 @@ namespace CMPCodeDatabase
     /// Single wiring point for Collector partials to avoid multiple overrides.
     /// Calls into TryWireFilenameOnly() and TryInitBackupsUI() when controls are added.
     /// </summary>
-    public partial class CollectorForm : Form
+    public partial class CollectorControl : UserControl
     {
         protected override void OnControlAdded(ControlEventArgs e)
         {

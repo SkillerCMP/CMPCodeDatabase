@@ -16,14 +16,24 @@ namespace CMPCodeDatabase
     public partial class MainForm : Form
     {
         private void ToggleCollectorWindow()
-                        {
-                            if (collectorWindow == null || collectorWindow.IsDisposed)
-                            {
-                                collectorWindow = new CollectorForm();
-                                foreach (var kv in collectorFallback) collectorWindow.AddItem(kv.Key, kv.Value);
-                            }
-                            if (collectorWindow.Visible) collectorWindow.Hide(); else collectorWindow.Show(this);
-                        }
+        {
+            // Tabbed layout: just toggle the selected tab.
+            if (CMPCodeDatabase.Core.Settings.AppSettings.Instance.UseTabbedPreviewCollector
+                && tabPreviewCollector != null && tabCollector != null && tabPreview != null)
+            {
+                tabPreviewCollector.SelectedTab = (tabPreviewCollector.SelectedTab == tabCollector) ? tabPreview : tabCollector;
+                try { collectorTab?.Focus(); } catch { }
+                return;
+            }
+
+            // Windowed layout: show/hide the dedicated Collector window.
+            if (collectorWindow == null || collectorWindow.IsDisposed)
+            {
+                collectorWindow = new CollectorForm();
+                foreach (var kv in collectorFallback) collectorWindow.AddItem(kv.Key, kv.Value);
+            }
+            if (collectorWindow.Visible) collectorWindow.Hide(); else collectorWindow.Show(this);
+        }
 
         private void ToggleCalculatorWindow()
         {

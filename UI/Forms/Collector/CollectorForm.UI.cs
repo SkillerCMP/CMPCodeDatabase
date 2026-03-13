@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// CMPCodeDatabase — File: UI/Forms/Collector/CollectorForm.UI.cs
+// CMPCodeDatabase — File: UI/Forms/Collector/CollectorControl.UI.cs
 // Purpose: UI composition, menus, and layout for the MainForm.
 // Notes:
 //  • Documentation-only header added (no behavioral changes).
@@ -16,16 +16,10 @@ using System.Windows.Forms;
 
 namespace CMPCodeDatabase
 {
-    public partial class CollectorForm : Form
+    public partial class CollectorControl : UserControl
     {
-        public CollectorForm()
+        public CollectorControl()
         {
-            // Actual Window Size
-            Text = "Code Collector";
-            StartPosition = FormStartPosition.CenterParent;
-            MinimumSize = new Size(660, 680);
-            Size = new Size(780, 820);
-
             // List with checkboxes
             clbCollector = new CheckedListBox
             {

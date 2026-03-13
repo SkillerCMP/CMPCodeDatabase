@@ -5,7 +5,7 @@ using System.Windows.Forms;
 
 namespace CMPCodeDatabase
 {
-    public partial class CollectorForm : Form
+    public partial class CollectorControl : UserControl
     {
         private bool _opsMenuReady_MENU;
         private MenuStrip _msOps;
@@ -57,8 +57,15 @@ namespace CMPCodeDatabase
             miApollo.DropDownItems.Add(miSavChk);
             miApollo.DropDownItems.Add(miSavAll);
 
+            var miSaveWizard   = new ToolStripMenuItem("Save Wizard");
+            var miSwChk        = new ToolStripMenuItem("swusercheats.xml (Checked)", null, (s, e) => ExportSwUserCheatsXml(onlyChecked: true));
+            var miSwAll        = new ToolStripMenuItem("swusercheats.xml (All)",     null, (s, e) => ExportSwUserCheatsXml(onlyChecked: false));
+            miSaveWizard.DropDownItems.Add(miSwChk);
+            miSaveWizard.DropDownItems.Add(miSwAll);
+
             miExport.DropDownItems.Add(miPCSX2);
             miExport.DropDownItems.Add(miApollo);
+            miExport.DropDownItems.Add(miSaveWizard);
 
             // Options → Select
             var miSelect  = new ToolStripMenuItem("Select");

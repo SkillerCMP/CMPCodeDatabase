@@ -138,7 +138,16 @@ treeCodes.AfterCollapse  += (_, __) => TreeViewExtent.UpdateHorizontalExtent(tre
 
 
 // Right: Code preview (monospace, no wrap)
-                    Label lblPreview = new Label() { Left = 780, Top = 25, AutoSize = true, Text = "Code Preview" };
+                    bool useTabbedPreviewCollector = CMPCodeDatabase.Core.Settings.AppSettings.Instance.UseTabbedPreviewCollector;
+
+                    Label lblPreview = new Label()
+                    {
+                        Left = 780,
+                        Top = 25,
+                        AutoSize = true,
+                        Text = useTabbedPreviewCollector ? "Preview / Collector" : "Code Preview"
+                    };
+
                     txtCodePreview = new TextBox()
                     {
                         Left = 780,
@@ -152,22 +161,58 @@ treeCodes.AfterCollapse  += (_, __) => TreeViewExtent.UpdateHorizontalExtent(tre
 
                     int charsDesired = "00000000 00000000 00000000 00000000".Length;
                     Size size = TextRenderer.MeasureText(new string('0', charsDesired), txtCodePreview.Font);
-                    txtCodePreview.Width = Math.Max(360, size.Width + 20);
+                    int previewW = Math.Max(360, size.Width + 20);
 
                     btnRefresh = new Button() { Left = 270, Top = 580, Text = "ReloadDB", AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Padding = new Padding(10, 4, 10, 4) };
                     btnRefresh.Click += BtnRefresh_Click;
 
-                    Controls.AddRange(new Control[]
+                    if (useTabbedPreviewCollector)
                     {
-                        lblGames, dbSelector, treeGames,
-                        lblCodes, treeCodes, lblPreview, txtCodePreview, btnRefresh
-                    });
+                        // Build the tab host and embed the preview textbox + collector surface.
+                        tabPreviewCollector = new TabControl()
+                        {
+                            Left = 780,
+                            Top = 50,
+                            Width = previewW,
+                            Height = 520
+                        };
 
+                        tabPreview = new TabPage("Code Preview");
+                        txtCodePreview.Dock = DockStyle.Fill;
+                        tabPreview.Controls.Add(txtCodePreview);
+
+                        tabCollector = new TabPage("Collector");
+                        collectorTab = new CollectorControl() { Dock = DockStyle.Fill };
+                        tabCollector.Controls.Add(collectorTab);
+
+                        tabPreviewCollector.TabPages.Add(tabPreview);
+                        tabPreviewCollector.TabPages.Add(tabCollector);
+
+                        Controls.AddRange(new Control[]
+                        {
+                            lblGames, dbSelector, treeGames,
+                            lblCodes, treeCodes, lblPreview, tabPreviewCollector, btnRefresh
+                        });
+
+                        // Hook collector to this host form (no window sizing; still enables shortcuts/menu in the tab).
+                        this.Shown += (_, __) => collectorTab.AttachHost(this, CollectorControl.CollectorHostMode.Tabbed);
+                    }
+                    else
+                    {
+                        // Classic layout: preview textbox + separate collector window.
+                        txtCodePreview.Width = previewW;
+
+                        Controls.AddRange(new Control[]
+                        {
+                            lblGames, dbSelector, treeGames,
+                            lblCodes, treeCodes, lblPreview, txtCodePreview, btnRefresh
+                        });
+                    }
                     int maxRight = Controls.Cast<Control>().Max(c => c.Left + c.Width);
                     int maxBottom = Controls.Cast<Control>().Max(c => c.Top + c.Height);
                     this.ClientSize = new Size(maxRight + 10, maxBottom + 10);
                                         // Capture baseline widths and apply responsive layout (DPI/Text Size safe)
-                    CaptureMainLayout(treeGames.Width, treeCodes.Width, txtCodePreview.Width);
+                    CaptureMainLayout(treeGames.Width, treeCodes.Width, (useTabbedPreviewCollector && tabPreviewCollector != null) ? tabPreviewCollector.Width : txtCodePreview.Width);
                     this.Shown += (_, __) => ApplyMainResponsiveLayout(lblGames, lblCodes, lblPreview);
                     this.Resize += (_, __) => ApplyMainResponsiveLayout(lblGames, lblCodes, lblPreview);
                     ApplyMainResponsiveLayout(lblGames, lblCodes, lblPreview);
@@ -198,6 +243,7 @@ private void ApplyMainResponsiveLayout(Label lblGames, Label lblCodes, Label lbl
     if (treeGames == null || treeCodes == null || txtCodePreview == null || dbSelector == null || btnRefresh == null)
         return;
 
+    TryInitGameSearchUI();
     // Top baseline: always below the MenuStrip (prevents headers being hidden at large Text Size)
     int menuH = _mainMenu?.Height ?? 0;
     int yLabel = menuH + 8;
@@ -230,6 +276,18 @@ private void ApplyMainResponsiveLayout(Label lblGames, Label lblCodes, Label lbl
     dbSelector.Left = xGames;
     dbSelector.Top = yCombo;
     dbSelector.Width = Math.Max(200, wGames);
+    if (_txtGameSearch is { IsDisposed: false })
+    {
+        int tbH = Math.Max(23, _txtGameSearch.PreferredHeight);
+        _txtGameSearch.Left = xGames;
+        _txtGameSearch.Top = dbSelector.Bottom + 6;
+        _txtGameSearch.Width = Math.Max(200, wGames);
+        _txtGameSearch.Height = tbH;
+        _txtGameSearch.BringToFront();
+
+        yTreeTop = _txtGameSearch.Bottom + 6;
+    }
+
 
     treeGames.Left = xGames;
     treeGames.Top = yTreeTop;
@@ -240,10 +298,14 @@ private void ApplyMainResponsiveLayout(Label lblGames, Label lblCodes, Label lbl
     treeCodes.Top = yCombo;
     treeCodes.Width = wCodes;
 
-    // Preview
-    txtCodePreview.Left = xPrev;
-    txtCodePreview.Top = yCombo;
-    txtCodePreview.Width = wPrev;
+    // Preview (either the classic TextBox, or the tab host if enabled)
+    Control previewHost = (tabPreviewCollector != null && !tabPreviewCollector.IsDisposed && tabPreviewCollector.Parent == this)
+        ? (Control)tabPreviewCollector
+        : (Control)txtCodePreview;
+
+    previewHost.Left = xPrev;
+    previewHost.Top = yCombo;
+    previewHost.Width = wPrev;
 
     // Heights grow with window, but never smaller than current content baseline
     int usableH = ClientSize.Height - yTreeTop - btnRowH - bottomPad;
@@ -251,8 +313,12 @@ private void ApplyMainResponsiveLayout(Label lblGames, Label lblCodes, Label lbl
     int hTrees = Math.Max(minTreeH, usableH);
 
     treeGames.Height = hTrees;
-    treeCodes.Height = hTrees;
-    txtCodePreview.Height = hTrees;
+
+    // Codes + Preview start higher (no search box), so give them extra height so bottoms align with Games.
+    int codesExtraH = Math.Max(0, yTreeTop - yCombo);
+    int hCodes = hTrees + codesExtraH;
+    treeCodes.Height = hCodes;
+    previewHost.Height = hCodes;
 
     // Reload row stays aligned under Codes column
     btnRefresh.Left = xCodes;

@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// CMPCodeDatabase — File: UI/Forms/Collector/CollectorForm.GameSync.cs
+// CMPCodeDatabase — File: UI/Forms/Collector/CollectorControl.GameSync.cs
 // Purpose: UI composition, menus, and layout for the MainForm.
 // Notes:
 //  • Documentation-only header added (no behavioral changes).
@@ -19,7 +19,7 @@ namespace CMPCodeDatabase
     /// Keeps the Collector in sync with the currently active game.
     /// Clears items when the active game key changes.
     /// </summary>
-    public partial class CollectorForm : Form
+    public partial class CollectorControl : UserControl
     {
         private string? _activeGameKey;
 

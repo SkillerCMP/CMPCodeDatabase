@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// CMPCodeDatabase — File: UI/Forms/Collector/CollectorForm.LogUI.cs
+// CMPCodeDatabase — File: UI/Forms/Collector/CollectorControl.LogUI.cs
 // Purpose: UI composition, menus, and layout for the MainForm.
 // Notes:
 //  • Documentation-only header added (no behavioral changes).
@@ -24,7 +24,7 @@ namespace CMPCodeDatabase
     /// - Provides AppendLog/ClearLog helpers
     /// - Rewires "Run Patch (Checked/All)" to a streaming runner
     /// </summary>
-    public partial class CollectorForm : Form
+    public partial class CollectorControl : UserControl
     {
         private Panel? _logPanel;
         private RichTextBox? _rtbLog;

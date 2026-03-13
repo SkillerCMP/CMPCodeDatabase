@@ -8,7 +8,7 @@ using System.Windows.Forms;
 
 namespace CMPCodeDatabase
 {
-    public partial class CollectorForm : Form
+    public partial class CollectorControl : UserControl
     {
         /// <summary>
         /// Preview PCSX2 .pnach text in Notepad (quick and reliable).
@@ -65,7 +65,7 @@ namespace CMPCodeDatabase
             {
                 sfd.Title = "Export PCSX2 .pnach";
                 sfd.Filter = "PCSX2 Patch (*.pnach)|*.pnach|All files (*.*)|*.*";
-                var prefer = GetPreferredPnachDefaultFileName_META(); // from CollectorForm.Tools.ELFCRC.cs
+                var prefer = GetPreferredPnachDefaultFileName_META(); // from CollectorControl.Tools.ELFCRC.cs
 				sfd.FileName = prefer ?? GuessPnachFileName(entries) ?? "CMPDBCollector.pnach";
                 if (sfd.ShowDialog(this) == DialogResult.OK)
                 {

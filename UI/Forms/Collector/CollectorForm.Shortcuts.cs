@@ -4,24 +4,37 @@ using System.Windows.Forms;
 
 namespace CMPCodeDatabase
 {
-    public partial class CollectorForm : Form
+    public partial class CollectorControl : UserControl
     {
         private bool _shortcutsReady_SHORT;
+        private Form? _shortcutsHost_SHORT;
 
         /// <summary>
-        /// Call once (e.g., in CollectorForm.OnShown): try { EnsureShortcuts_SHORT(); } catch {}
+        /// Wires Collector shortcuts onto the host Form (so KeyPreview works).
+        /// Safe to call multiple times; the hook is installed once.
         /// </summary>
-        private void EnsureShortcuts_SHORT()
+        private void EnsureShortcuts_SHORT(Form host)
         {
             if (_shortcutsReady_SHORT) return;
             _shortcutsReady_SHORT = true;
+            _shortcutsHost_SHORT = host;
 
-            try { this.KeyPreview = true; } catch { }
-            this.KeyDown += CollectorForm_KeyDown_SHORT;
+            try { host.KeyPreview = true; } catch { }
+
+            // Only handle shortcuts when this collector surface is focused.
+            host.KeyDown += Host_KeyDown_SHORT;
+
+            // Prevent leaks if the host outlives the control (rare, but safe).
+            this.Disposed += (_, __) =>
+            {
+                try { host.KeyDown -= Host_KeyDown_SHORT; } catch { }
+            };
         }
 
-        private void CollectorForm_KeyDown_SHORT(object sender, KeyEventArgs e)
+        private void Host_KeyDown_SHORT(object? sender, KeyEventArgs e)
         {
+            if (!this.ContainsFocus) return;
+
             // Target file
             if (e.Control && e.KeyCode == Keys.O) { ClickByTextContains_SHORT("Browse"); e.SuppressKeyPress = true; return; }
             if (e.Control && e.KeyCode == Keys.L) { ClickTopClear_SHORT(); e.SuppressKeyPress = true; return; }

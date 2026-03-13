@@ -4,7 +4,7 @@ using System.Windows.Forms;
 
 namespace CMPCodeDatabase
 {
-    public partial class CollectorForm : Form
+    public partial class CollectorControl : UserControl
     {
         // Remember the last target file we saw (normalized)
         private string? _activeTargetPathNorm;

@@ -12,12 +12,12 @@ namespace CMPCodeDatabase
     /// </summary>
     public class ElfCrcPickerForm : Form
     {
-        private readonly CollectorForm _owner;
+        private readonly CollectorControl _owner;
         private Label _dropZone;
         private Button _btnBrowse;
         private Label _tip;
 
-        public ElfCrcPickerForm(CollectorForm owner)
+        public ElfCrcPickerForm(CollectorControl owner)
         {
             _owner = owner;
             InitializeUi();

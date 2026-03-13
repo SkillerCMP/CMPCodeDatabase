@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// CMPCodeDatabase — File: UI/Forms/Collector/CollectorForm.LogUI.Helpers.cs
+// CMPCodeDatabase — File: UI/Forms/Collector/CollectorControl.LogUI.Helpers.cs
 // Purpose: UI composition, menus, and layout for the MainForm.
 // Notes:
 //  • Documentation-only header added (no behavioral changes).
@@ -16,7 +16,7 @@ using System.Windows.Forms;
 
 namespace CMPCodeDatabase
 {
-    public partial class CollectorForm : Form
+    public partial class CollectorControl : UserControl
     {
         /// <summary>
         /// One-time UI tweaks executed on load to stabilize the layout and layout order.

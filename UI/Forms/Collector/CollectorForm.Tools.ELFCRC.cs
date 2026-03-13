@@ -9,10 +9,10 @@ namespace CMPCodeDatabase
     /// <summary>
     /// Adds "Options > Tools > Get ELF CRC..." to the Collector window + stores a preferred default .pnach name.
     /// Example stored flag: "SLES-52641_A1FD63D6" → used as default for .pnach export if present.
-    /// Wire once (e.g., CollectorForm.OnShown): try { EnsureCollectorTools_ELFCRC(); } catch {}
+    /// Wire once (e.g., CollectorControl.OnShown): try { EnsureCollectorTools_ELFCRC(); } catch {}
     /// Access preferred name in export code via GetPreferredPnachDefaultFileName_META().
     /// </summary>
-    public partial class CollectorForm : Form
+    public partial class CollectorControl : UserControl
     {
         // Stored "name flag" (e.g., SLES-52641_A1FD63D6). Null when unset.
         private string _pnachNameHint_META;

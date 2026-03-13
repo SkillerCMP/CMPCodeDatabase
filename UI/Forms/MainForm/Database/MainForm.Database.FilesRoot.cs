@@ -11,6 +11,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -24,24 +25,57 @@ namespace CMPCodeDatabase
     /// </summary>
     public partial class MainForm : Form
     {
+        /// <summary>
+        /// Active game's GameID metadata (from ^2 = GameID: ...), if available.
+        /// Used by Collector exports (e.g., swusercheats.xml) to auto-select the correct Save Wizard game.
+        /// </summary>
+        internal string? CurrentGameIdsCsv { get; private set; }
+
+
 
         private static string? TryReadGameIdFromTxt(string txtPath)
         {
+            var ids = new List<string>();
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
             foreach (var line in System.IO.File.ReadLines(txtPath))
             {
                 var s = line.Trim();
-                if (s.StartsWith("^2", StringComparison.Ordinal))
+                if (s.StartsWith("^2", StringComparison.Ordinal) || s.StartsWith(";", StringComparison.Ordinal))
                 {
                     var idx = s.IndexOf("GameID:", StringComparison.OrdinalIgnoreCase);
-                    if (idx >= 0) return s.Substring(idx + "GameID:".Length).Trim().Trim('"');
+                    var tokenLen = "GameID:".Length;
+                    if (idx < 0)
+                    {
+                        idx = s.IndexOf("Game ID:", StringComparison.OrdinalIgnoreCase);
+                        tokenLen = "Game ID:".Length;
+                    }
+                    if (idx >= 0)
+                    {
+                        var val = s.Substring(idx + tokenLen);
+                        foreach (Match m in Regex.Matches(val, @"\b[A-Za-z]{4}\d{5}\b"))
+                        {
+                            var id = m.Value.Trim().ToUpperInvariant();
+                            if (seen.Add(id)) ids.Add(id);
+                        }
+                    }
+                }
+                else if (ids.Count > 0 && !s.StartsWith("^", StringComparison.Ordinal))
+                {
+                    // stop once we've captured IDs and header markers have ended
+                    break;
                 }
             }
-            return null;
+
+            return ids.Count == 0 ? null : string.Join(",", ids);
         }
 
         private static (string? Name, string? GameId) TryReadHeader(string txtPath)
         {
-            string? name = null, id = null;
+            string? name = null;
+            var ids = new List<string>();
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
             foreach (var line in System.IO.File.ReadLines(txtPath))
             {
                 var s = line.Trim();
@@ -53,11 +87,24 @@ namespace CMPCodeDatabase
                 else if (s.StartsWith("^2", StringComparison.Ordinal))
                 {
                     var ix = s.IndexOf("GameID:", StringComparison.OrdinalIgnoreCase);
-                    if (ix >= 0) id = s.Substring(ix + "GameID:".Length).Trim().Trim('"');
+                    if (ix >= 0)
+                    {
+                        var val = s.Substring(ix + "GameID:".Length);
+                        foreach (Match m in Regex.Matches(val, @"\b[A-Za-z]{4}\d{5}\b"))
+                        {
+                            var id = m.Value.Trim().ToUpperInvariant();
+                            if (seen.Add(id)) ids.Add(id);
+                        }
+                    }
                 }
-                if (name != null && id != null) break;
+
+                // Header ends when we hit a non-meta line (or first group)
+                if ((name != null || ids.Count > 0) && (s.StartsWith("[", StringComparison.Ordinal) || (!s.StartsWith("^", StringComparison.Ordinal) && s.Length > 0)))
+                    break;
             }
-            return (name, id);
+
+            var idCsv = ids.Count == 0 ? null : string.Join(",", ids);
+            return (name, idCsv);
         }
 
         private static string CleanDisplayNameFromFile(string filePath)
@@ -182,6 +229,15 @@ namespace CMPCodeDatabase
         {
             treeCodes.BeginUpdate();
 treeCodes.Nodes.Clear();
+
+            // Track current game's GameID metadata for Collector exports
+            try
+            {
+                var header = TryReadHeader(filePath);
+                CurrentGameIdsCsv = string.IsNullOrWhiteSpace(header.GameId) ? null : header.GameId.Trim();
+            }
+            catch { CurrentGameIdsCsv = null; }
+
 
             // Reset parsing state (mirrors LoadCodes behavior)
             originalCodeTemplates.Clear();

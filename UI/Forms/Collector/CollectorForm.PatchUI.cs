@@ -1,5 +1,6 @@
+using System.Windows.Forms;
 // ─────────────────────────────────────────────────────────────────────────────
-// CMPCodeDatabase — File: UI/Forms/Collector/CollectorForm.PatchUI.cs
+// CMPCodeDatabase — File: UI/Forms/Collector/CollectorControl.PatchUI.cs
 // Purpose: UI composition, menus, and layout for the MainForm.
 // Notes:
 //  • Documentation-only header added (no behavioral changes).
@@ -12,7 +13,7 @@
 
 namespace CMPCodeDatabase
 {
-    public partial class CollectorForm : System.Windows.Forms.Form
+    public partial class CollectorControl : UserControl
     {
         // Patch UI intentionally omitted for this patch.
     }

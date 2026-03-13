@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// CMPCodeDatabase — File: UI/Forms/Collector/CollectorForm.Events.cs
+// CMPCodeDatabase — File: UI/Forms/Collector/CollectorControl.Events.cs
 // Purpose: MainForm event handlers for buttons/menus and code actions.
 // Notes:
 //  • Documentation-only header added (no behavioral changes).
@@ -16,7 +16,7 @@ using System.Windows.Forms;
 
 namespace CMPCodeDatabase
 {
-    public partial class CollectorForm : Form
+    public partial class CollectorControl : UserControl
     {
         private void CopyChecked()
         {

@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// CMPCodeDatabase — File: UI/Forms/Collector/CollectorForm.Core.cs
+// CMPCodeDatabase — File: UI/Forms/Collector/CollectorControl.Core.cs
 // Purpose: UI composition, menus, and layout for the MainForm.
 // Notes:
 //  • Documentation-only header added (no behavioral changes).
@@ -16,7 +16,7 @@ using System.Windows.Forms;
 
 namespace CMPCodeDatabase
 {
-    public partial class CollectorForm : Form
+    public partial class CollectorControl : UserControl
     {
         public void AddItem(string name, string code)
         {
@@ -53,7 +53,15 @@ namespace CMPCodeDatabase
         }
         public IEnumerable<string> GetAllNames() => collectorCodeMap.Keys.ToArray();
 
-        public string GetCodeByName(string name) =>
+        
+
+        public bool HasAnyItems()
+        {
+            // Collector is considered non-empty if either the visible list or backing map has entries.
+            // (UI list should be authoritative, but the map is a safe fallback.)
+            return (clbCollector?.Items?.Count ?? 0) > 0 || collectorCodeMap.Count > 0;
+        }
+public string GetCodeByName(string name) =>
             collectorCodeMap.TryGetValue(name, out var code) ? code : string.Empty;
 
         private void ClearAll()

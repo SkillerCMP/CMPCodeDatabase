@@ -1,5 +1,6 @@
+using System.Windows.Forms;
 // ─────────────────────────────────────────────────────────────────────────────
-// CMPCodeDatabase — File: UI/Forms/Collector/CollectorForm.Savepatch.Import.cs
+// CMPCodeDatabase — File: UI/Forms/Collector/CollectorControl.Savepatch.Import.cs
 // Purpose: UI composition, menus, and layout for the MainForm.
 // Notes:
 //  • Documentation-only header added (no behavioral changes).
@@ -12,7 +13,7 @@
 
 namespace CMPCodeDatabase
 {
-    public partial class CollectorForm : System.Windows.Forms.Form
+    public partial class CollectorControl : UserControl
     {
         // .savepatch import intentionally disabled per current design.
         public void ImportSavepatch(string path) { /* no-op */ }

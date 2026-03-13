@@ -22,6 +22,15 @@ namespace CMPCodeDatabase.Core.Settings
         public string? PatchToolPath { get; set; }
         public bool ShowPatchLogByDefault { get; set; }
         public bool OpenCollectorOnAdd { get; set; }
+        public bool UseTabbedPreviewCollector { get; set; } = false; // tab "Code Preview" + "Collector" in MainForm
+
+        // UX: double-click MOD codes -> prompt for mods then auto-add to Collector + reset
+        public bool DoubleClickResolveModsThenAddToCollector { get; set; } = false;
+
+        // Save Wizard integration (Collector export)
+        public string? SwGameListPath { get; set; }            // path to Save Wizard gamelist.xml
+        public string? SwLastGameId { get; set; }              // last exported title id (CUSA/NPUB/etc)
+        public string? SwLastUserCheatsPath { get; set; }      // last swusercheats.xml output path
 
         // Default-baked links (user can override in Settings)
         public string DatabaseDownloadUrl { get; set; } =

@@ -1,5 +1,6 @@
+using System.Windows.Forms;
 // ─────────────────────────────────────────────────────────────────────────────
-// CMPCodeDatabase — File: UI/Forms/Collector/CollectorForm.Checkboxes.ForceDetails.cs
+// CMPCodeDatabase — File: UI/Forms/Collector/CollectorControl.Checkboxes.ForceDetails.cs
 // Purpose: UI composition, menus, and layout for the MainForm.
 // Notes:
 //  • Documentation-only header added (no behavioral changes).
@@ -12,7 +13,7 @@
 
 namespace CMPCodeDatabase
 {
-    public partial class CollectorForm : System.Windows.Forms.Form
+    public partial class CollectorControl : UserControl
     {
         // Legacy ListView checkbox code removed; using CheckedListBox instead.
     }

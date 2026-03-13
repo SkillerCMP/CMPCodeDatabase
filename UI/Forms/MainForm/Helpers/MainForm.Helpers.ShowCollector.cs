@@ -16,13 +16,24 @@ namespace CMPCodeDatabase
     {
         private void ShowCollectorWindow()
         {
+            // Tabbed layout: just switch to the Collector tab.
+            if (CMPCodeDatabase.Core.Settings.AppSettings.Instance.UseTabbedPreviewCollector
+                && tabPreviewCollector != null && tabCollector != null)
+            {
+                tabPreviewCollector.SelectedTab = tabCollector;
+                try { collectorTab?.Focus(); } catch { }
+                return;
+            }
+
+            // Windowed layout: show the dedicated Collector window.
             if (collectorWindow == null || collectorWindow.IsDisposed)
             {
                 collectorWindow = new CollectorForm();
                 foreach (var kv in collectorFallback)
-{                    if (BlockIfUnresolvedForCollector(null, kv.Value)) continue;
+                {
+                    if (BlockIfUnresolvedForCollector(null, kv.Value)) continue;
                     collectorWindow.AddItem(kv.Key, kv.Value);
-}
+                }
             }
             if (!collectorWindow.Visible) collectorWindow.Show(this);
             if (collectorWindow.WindowState == FormWindowState.Minimized)

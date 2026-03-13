@@ -70,6 +70,8 @@ try { NotifyCodesTreeRebuilt_REFRESH(); } catch { }
                 {
                     treeCodes.BeginUpdate();
 					treeCodes.Nodes.Clear();
+                    CurrentGameIdsCsv = null;
+
                     originalCodeTemplates.Clear();
                     originalNodeNames.Clear();
                     nodeNotes.Clear();
@@ -94,6 +96,7 @@ try { NotifyCodesTreeRebuilt_REFRESH(); } catch { }
                         var header = TryReadHeader(firstTxt);
                         var _name = header.Name ?? folderName;
                         rootCaptionForFolder = !string.IsNullOrEmpty(header.GameId) ? $"{_name} - {header.GameId}" : _name;
+                        CurrentGameIdsCsv = string.IsNullOrWhiteSpace(header.GameId) ? null : header.GameId.Trim();
                     }
                     treeCodes.Nodes[0].Text = rootCaptionForFolder;
                     originalNodeNames[treeCodes.Nodes[0]] = rootCaptionForFolder;

@@ -66,7 +66,14 @@ namespace CMPCodeDatabase
             {
                 var s = AppSettings.Instance;
 
-                if (collectorWindow != null && !collectorWindow.IsDisposed)
+                if (CMPCodeDatabase.Core.Settings.AppSettings.Instance.UseTabbedPreviewCollector
+                    && collectorTab != null && !collectorTab.IsDisposed)
+                {
+                    if (BlockIfUnresolvedForCollector(null, code)) return;
+                    collectorTab.AddItem(name, code);
+                    if (IsOpenCollectorOnAddEnabled(s)) EnsureCollectorVisible();
+                }
+                else if (collectorWindow != null && !collectorWindow.IsDisposed)
                 {
                     if (BlockIfUnresolvedForCollector(null, code)) return;
                     collectorWindow.AddItem(name, code);
@@ -76,7 +83,6 @@ namespace CMPCodeDatabase
                     collectorFallback[name] = code;
                     if (IsOpenCollectorOnAddEnabled(s)) EnsureCollectorVisible();
                 }
-
                 ResetCode(node);
                 _lastAutoSentSignature = sig;
             }
@@ -184,12 +190,8 @@ namespace CMPCodeDatabase
 
         private void EnsureCollectorVisible()
         {
-            if (collectorWindow == null || collectorWindow.IsDisposed)
-            {
-                collectorWindow = new CollectorForm();
-                foreach (var kv in collectorFallback) collectorWindow.AddItem(kv.Key, kv.Value);
-            }
-            if (!collectorWindow.Visible) collectorWindow.Show(this); else collectorWindow.BringToFront();
+            // Reuse the normal show logic (it already handles tabbed vs windowed layout).
+            ShowCollectorWindow();
         }
     }
 }

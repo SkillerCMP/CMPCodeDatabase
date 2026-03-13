@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// CMPCodeDatabase — File: UI/Forms/Collector/CollectorForm.PatcherBoot.cs
+// CMPCodeDatabase — File: UI/Forms/Collector/CollectorControl.PatcherBoot.cs
 // Purpose: UI composition, menus, and layout for the MainForm.
 // Notes:
 //  • Documentation-only header added (no behavioral changes).
@@ -18,11 +18,11 @@ using CMPCodeDatabase.Core.Settings;
 namespace CMPCodeDatabase
 {
     /// <summary>
-    /// Ensures CollectorForm has a valid PatchProgramExePath as soon as the form is created,
+    /// Ensures CollectorControl has a valid PatchProgramExePath as soon as the form is created,
     /// using AppSettings.PatchToolPath or the default %ROOT%\Files\Tools\patcher.exe.
     /// If a valid path is discovered and AppSettings is empty, it is persisted.
     /// </summary>
-    public partial class CollectorForm : Form
+    public partial class CollectorControl : UserControl
     {
         protected override void OnHandleCreated(EventArgs e)
         {

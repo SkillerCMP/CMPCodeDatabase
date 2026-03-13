@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// CMPCodeDatabase — File: UI/Forms/Collector/CollectorForm.PatcherResolver.FromPreview.cs
+// CMPCodeDatabase — File: UI/Forms/Collector/CollectorControl.PatcherResolver.FromPreview.cs
 // Purpose: Helpers to resolve filesystem paths and database roots.
 // Notes:
 //  • Documentation-only header added (no behavioral changes).
@@ -16,7 +16,7 @@ using System.Windows.Forms;
 
 namespace CMPCodeDatabase
 {
-    public partial class CollectorForm : Form
+    public partial class CollectorControl : UserControl
     {
         internal string? TryReadDatabaseNameFromSavepatch(string? savepatchPath)
         {

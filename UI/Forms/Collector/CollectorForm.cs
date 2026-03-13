@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// CMPCodeDatabase — File: UI/Forms/Collector/CollectorForm.cs
+// CMPCodeDatabase — File: UI/Forms/Collector/CollectorControl.cs
 // Purpose: UI composition, menus, and layout for the MainForm.
 // Notes:
 //  • Documentation-only header added (no behavioral changes).
@@ -18,7 +18,7 @@ using System.Windows.Forms;
 using System.ComponentModel;
 namespace CMPCodeDatabase
 {
-    public partial class CollectorForm : Form
+    public partial class CollectorControl : UserControl
     {
         // Core UI
         private CheckedListBox clbCollector;

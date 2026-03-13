@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// CMPCodeDatabase — File: UI/Forms/Collector/CollectorForm.PatchEvents.Streaming.cs
+// CMPCodeDatabase — File: UI/Forms/Collector/CollectorControl.PatchEvents.Streaming.cs
 // Purpose: MainForm event handlers for buttons/menus and code actions.
 // Notes:
 //  • Documentation-only header added (no behavioral changes).
@@ -22,7 +22,7 @@ namespace CMPCodeDatabase
     /// Streaming variant of RunPatch that writes to the bottom log instead of showing a popup.
     /// This does not remove the original RunPatch; we rewire the run buttons to call this method.
     /// </summary>
-    public partial class CollectorForm : Form
+    public partial class CollectorControl : UserControl
     {
         private async void RunPatchStreaming(bool onlyChecked)
         {
