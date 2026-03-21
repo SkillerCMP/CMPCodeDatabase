@@ -79,8 +79,8 @@ namespace CMPCodeDatabase
                 // Replace token
                 tpl = tpl.Remove(target.Index, target.Length).Insert(target.Index, hex);
                 node.Tag = tpl;
-                txtCodePreview.Text = tpl;
-                try { txtCodePreview.HideSelection = false; txtCodePreview.Select(target.Index, hex.Length); txtCodePreview.ScrollToCaret(); txtCodePreview.Update(); } catch { }
+                if (txtCodePreview != null) txtCodePreview.Text = tpl;
+                if (txtCodePreview != null) try { txtCodePreview.HideSelection = false; txtCodePreview.Select(target.Index, hex.Length); txtCodePreview.ScrollToCaret(); txtCodePreview.Update(); } catch { }
 
                 AppendAppliedModName(node, "Joker");
                 node.Text = GetDisplayName(node);

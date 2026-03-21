@@ -21,7 +21,7 @@ namespace CMPCodeDatabase
         /// <param name="titleLabel">Optional label to show in the title (e.g., "ASCII BIG" or "ASCII LITTLE")</param>
         /// <param name="initialText">Optional initial input text; if null/empty or ".....", starts blank</param>
         /// <param name="maxChars">Optional cap for number of characters; if null or <=0, unlimited</param>
-        public AsciiHexAmountDialog(bool littleEndian, string titleLabel = null, string initialText = null, int? maxChars = null)
+        public AsciiHexAmountDialog(bool littleEndian, string? titleLabel = null, string? initialText = null, int? maxChars = null)
         {
             _littleEndian = littleEndian;
             _maxChars = maxChars;

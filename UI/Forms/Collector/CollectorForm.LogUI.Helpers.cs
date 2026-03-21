@@ -197,7 +197,7 @@ namespace CMPCodeDatabase
             var chk = _chkBackup ?? FindCheckboxNearBottom();
             var clear = FindByTextDeep<Button>(this, "Clear Log");
 
-            Control bar = open?.Parent ?? restore?.Parent ?? chk?.Parent ?? _backupBar;
+            Control? bar = open?.Parent ?? restore?.Parent ?? chk?.Parent ?? _backupBar;
             if (bar == null) return;
             bar.RightToLeft = RightToLeft.No;
 
@@ -217,7 +217,7 @@ namespace CMPCodeDatabase
 
         private void BackupBar_ForceLeftLayout_Handler(object? sender, EventArgs e)
         {
-            Control bar = sender as Control ?? _backupBar;
+            Control? bar = sender as Control ?? _backupBar;
             if (bar == null) return;
 
             var open = _btnOpenBackups ?? FindByTextDeep<Button>(this, "Open Backups");
@@ -335,7 +335,7 @@ namespace CMPCodeDatabase
                 var openBtn    = FindByTextDeep<Button>(this, "Open Backups");
                 var restoreBtn = FindByTextDeep<Button>(this, "Restore Backup");
                 var clearBtn   = FindByTextDeep<Button>(this, "Clear Log");
-                Control bar = openBtn?.Parent ?? restoreBtn?.Parent ?? clearBtn?.Parent;
+                Control? bar = openBtn?.Parent ?? restoreBtn?.Parent ?? clearBtn?.Parent;
                 if (bar == null) return;
 
                 EnsureBottomBarAutoSize(bar);
@@ -377,7 +377,7 @@ private void EnsureBottomBarAutoSize(Control bar)
         {
             try
             {
-                Control host = bar.Parent;
+                Control? host = bar.Parent;
                 if (host == null) return;
 
                 // Walk up: if a parent is bottom-docked and only hosts this bar, remove/neutralize it.

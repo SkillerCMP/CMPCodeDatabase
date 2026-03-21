@@ -52,6 +52,8 @@ namespace CMPCodeDatabase
                 private readonly Dictionary<TreeNode, string> originalCodeTemplates = new();
                 private readonly Dictionary<TreeNode, string> originalNodeNames = new();
                 private readonly Dictionary<TreeNode, string> nodeNotes = new();
+                private readonly Dictionary<TreeNode, string> nodeCredits = new();
+
 
                 // Popup notes per node (double-brace {{...}}) and session suppression
                 private readonly Dictionary<TreeNode, List<string>> nodePopupNotes = new();
@@ -84,6 +86,8 @@ namespace CMPCodeDatabase
 private Form? databaseStatsWindow;
                 // Fallback collector storage when collector window is closed
                 private readonly Dictionary<string, string> collectorFallback = new();
+                private readonly Dictionary<string, CMPCodeDatabase.Core.Models.CollectorItemMeta> collectorFallbackMeta = new(StringComparer.OrdinalIgnoreCase);
+
 
                 public MainForm()
                 {
@@ -129,7 +133,6 @@ private Form? databaseStatsWindow;
                 private Label lblStatus = new Label() { Dock = DockStyle.Top, AutoSize = true, Padding = new Padding(4) };
                 private Label lblPreview = new Label() { Dock = DockStyle.Top, AutoSize = true, Padding = new Padding(4) };
                 private Label lblMeta = new Label() { Dock = DockStyle.Top, AutoSize = true, Padding = new Padding(4) };
-                private Label lblBoxName;
                 private Button btnDefault = new Button() { Text = "Use Default", AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Padding = new Padding(14, 4, 14, 4) };
                 private Button btnOK = new Button() { Text = "OK", AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Padding = new Padding(14, 4, 14, 4) };
                 private Button btnCancel = new Button() { Text = "Cancel", AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Padding = new Padding(14, 4, 14, 4) };
@@ -141,7 +144,7 @@ private Form? databaseStatsWindow;
                 private string _lastValidInput = "0";      // for auto-revert on overflow
                 private bool _internalChange = false;      // guard to prevent recursion during revert
 
-                public SpecialAmountDialog(string title, string defaultHex, string type, string endian, string boxLabel = null)
+                public SpecialAmountDialog(string title, string defaultHex, string type, string endian, string? boxLabel = null)
                 {
                     this.type = (type ?? "HEX").Trim().ToUpperInvariant();
                     this.endian = (endian ?? "BIG").Trim().ToUpperInvariant();

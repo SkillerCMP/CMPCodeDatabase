@@ -8,7 +8,7 @@ namespace CMPCodeDatabase
     public partial class CollectorControl : UserControl
     {
         private bool _opsMenuReady_MENU;
-        private MenuStrip _msOps;
+        private MenuStrip? _msOps;
 
         /// <summary>
         /// Build a top menu for Collector operations and hide old buttons (Select/Copy/Clear).
@@ -87,6 +87,7 @@ namespace CMPCodeDatabase
                 try
                 {
                     collectorCodeMap.Clear();
+                    ClearMeta();
                     clbCollector.Items.Clear();
                 }
                 catch { }
@@ -105,22 +106,22 @@ namespace CMPCodeDatabase
             // Insert the menu just above the "Target file" (dataBar) row
             try
             {
-                Control dataBarCtl = this.Controls.Cast<Control>().FirstOrDefault(c => c.Name == "dataBar" || (c is FlowLayoutPanel && c.Controls.OfType<Button>().Any(b => b.Text.Contains("Browse"))));
+                Control? dataBarCtl = this.Controls.Cast<Control>().FirstOrDefault(c => c.Name == "dataBar" || (c is FlowLayoutPanel && c.Controls.OfType<Button>().Any(b => b.Text.Contains("Browse"))));
                 int insertIndex = 0;
                 if (dataBarCtl != null)
                 {
                     insertIndex = this.Controls.GetChildIndex(dataBarCtl);
                 }
-                this.Controls.Add(_msOps);
+                this.Controls.Add(_msOps!);
                 if (dataBarCtl != null)
-                    this.Controls.SetChildIndex(_msOps, insertIndex);
+                    this.Controls.SetChildIndex(_msOps!, insertIndex);
                 else
-                    this.Controls.SetChildIndex(_msOps, 0);
+                    this.Controls.SetChildIndex(_msOps!, 0);
             }
             catch
             {
                 // Fallback: add normally; Dock=Top will still place it near the top.
-                this.Controls.Add(_msOps);
+                this.Controls.Add(_msOps!);
             }
         }
     }

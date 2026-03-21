@@ -13,9 +13,9 @@ namespace CMPCodeDatabase
     public class ElfCrcPickerForm : Form
     {
         private readonly CollectorControl _owner;
-        private Label _dropZone;
-        private Button _btnBrowse;
-        private Label _tip;
+        private Label _dropZone = null!;
+        private Button _btnBrowse = null!;
+        private Label _tip = null!;
 
         public ElfCrcPickerForm(CollectorControl owner)
         {
@@ -78,7 +78,7 @@ namespace CMPCodeDatabase
             };
         }
 
-        private void DropZone_DragEnter(object sender, DragEventArgs e)
+        private void DropZone_DragEnter(object? sender, DragEventArgs e)
         {
             if (e.Data != null && e.Data.GetDataPresent(DataFormats.FileDrop))
                 e.Effect = DragDropEffects.Copy;
@@ -86,11 +86,11 @@ namespace CMPCodeDatabase
                 e.Effect = DragDropEffects.None;
         }
 
-        private void DropZone_DragDrop(object sender, DragEventArgs e)
+        private void DropZone_DragDrop(object? sender, DragEventArgs e)
         {
             try
             {
-                var files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                var files = e.Data?.GetData(DataFormats.FileDrop) as string[];
                 if (files == null || files.Length == 0) return;
                 ComputeAndPersist(files[0]);
             }
@@ -100,7 +100,7 @@ namespace CMPCodeDatabase
             }
         }
 
-        private void BtnBrowse_Click(object sender, EventArgs e)
+        private void BtnBrowse_Click(object? sender, EventArgs e)
         {
             using var ofd = new OpenFileDialog
             {
@@ -123,7 +123,7 @@ namespace CMPCodeDatabase
                 return;
             }
 
-            string crc = Pcsx2ElfCrc.ComputeFromFile(elfPath);
+            string? crc = Pcsx2ElfCrc.ComputeFromFile(elfPath);
             if (string.IsNullOrWhiteSpace(crc))
             {
                 MessageBox.Show(this, "Unable to compute CRC from the selected ELF.", "Get ELF CRC", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -131,7 +131,7 @@ namespace CMPCodeDatabase
             }
 
             string baseName = Path.GetFileName(elfPath);
-            string formatted = FormatElfBaseForPnach(baseName);
+            string? formatted = FormatElfBaseForPnach(baseName);
             if (string.IsNullOrEmpty(formatted))
                 formatted = SanitizeBaseName(baseName);
 
@@ -152,7 +152,7 @@ namespace CMPCodeDatabase
         }
 
         /// <summary>Heuristic: turn e.g. "SLES_526.41" or "SLUS_209.56" into "SLES-52641" / "SLUS-20956".</summary>
-        private static string FormatElfBaseForPnach(string fileName)
+        private static string? FormatElfBaseForPnach(string fileName)
         {
             if (string.IsNullOrWhiteSpace(fileName)) return null;
             // Keep letters/digits only, uppercase.

@@ -25,7 +25,7 @@ namespace CMPCodeDatabase.SpecialMods
         public string ResultHex { get; private set; } = "0000";
         public string ResultPressLabel { get; private set; } = "Press Buttons";
 
-        public JokerDialog(string platform, HashSet<string> mods = null)
+        public JokerDialog(string platform, HashSet<string>? mods = null)
         {
             initialPlat = string.IsNullOrWhiteSpace(platform) ? "PS2" : platform.ToUpperInvariant();
             platLocked = initialPlat != "ALL";

@@ -45,7 +45,7 @@ namespace CMPCodeDatabase
             }
 
             // Ensure we have a patcher exe path
-            string exePath = PatchProgramExePath;
+            string? exePath = PatchProgramExePath;
             try { var __db = TryReadDatabaseNameFromSavepatch(savepatchPath); if (!string.IsNullOrWhiteSpace(__db)) { exePath = DbCfg.ResolvePatcherPath(__db); PatchProgramExePath = exePath; try { UpdatePatcherStatus(exePath); } catch { } } } catch { }
             if (string.IsNullOrWhiteSpace(exePath))
             {

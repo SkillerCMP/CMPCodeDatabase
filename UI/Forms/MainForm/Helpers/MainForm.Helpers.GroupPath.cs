@@ -16,7 +16,7 @@ namespace CMPCodeDatabase
             if (codeNode == null) return string.Empty;
             List<string> parts = [];
 
-            TreeNode cur = codeNode.Parent;
+            TreeNode? cur = codeNode.Parent;
             while (cur != null)
             {
                 // Stop at the top game root

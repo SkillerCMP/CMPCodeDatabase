@@ -49,7 +49,7 @@ namespace CMPCodeDatabase
             catch { }
 
             collectorCodeMap[name] = code ?? string.Empty;
-            clbCollector.Items.Add(name, true);
+            clbCollector!.Items.Add(name, true);
         }
         public IEnumerable<string> GetAllNames() => collectorCodeMap.Keys.ToArray();
 
@@ -73,6 +73,7 @@ public string GetCodeByName(string name) =>
 
             clbCollector.Items.Clear();
             collectorCodeMap.Clear();
+            ClearMeta();
         }
     }
 }

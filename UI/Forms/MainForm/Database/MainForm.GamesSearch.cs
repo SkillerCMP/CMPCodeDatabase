@@ -34,6 +34,7 @@ namespace CMPCodeDatabase
         private List<GameEntry> _allGames = [];
         private int _baseSig = 0;
         private bool _filteringInternal = false;
+        private bool _suppressGameSearchTextChanged = false;
 
         internal void TryInitGameSearchUI()
         {
@@ -46,6 +47,7 @@ namespace CMPCodeDatabase
 
             // Place ONLY under the Games section (left), just below the DB selector and above the tree
             var parent = treeGames.Parent;
+            if (parent == null) return;
             parent.Controls.Add(_txtGameSearch);
 
             int left = treeGames.Left;
@@ -75,7 +77,8 @@ namespace CMPCodeDatabase
             // Wire search behavior
             _txtGameSearch.TextChanged += (s, e) =>
             {
-                // Keep base snapshot fresh only when the visible list grew (external reload)
+                                if (_suppressGameSearchTextChanged) return;
+// Keep base snapshot fresh only when the visible list grew (external reload)
                 ApplyGamesFilter(_txtGameSearch.Text);
             CaptureCurrentAsBaseIfBetter();
             };

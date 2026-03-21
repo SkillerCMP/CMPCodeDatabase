@@ -42,6 +42,7 @@ namespace CMPCodeDatabase
             gamesTree.NodeMouseClick += (s, e) =>
             {
                 if (e.Button != MouseButtons.Right) return;
+                if (e.Node == null) return;
                 gamesTree.SelectedNode = e.Node;
 
                 var path = resolvePathForNode(e.Node);

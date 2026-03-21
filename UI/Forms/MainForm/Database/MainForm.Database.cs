@@ -156,7 +156,7 @@ TreeNode? currentGroup = null;
                             if (__trim.StartsWith("^6 = MODS:", StringComparison.Ordinal)) __inModsSection = true;
                             else if (__trim.StartsWith("^", StringComparison.Ordinal) && !__trim.StartsWith("^6 = MODS:", StringComparison.Ordinal)) __inModsSection = false;
 
-                            string line = raw.TrimEnd();
+                            string line = (raw ?? string.Empty).TrimEnd();
 
                             // --- Game Note: '{}' on its own line (outside MODS; and not a '+' code line) ---
                             if (!__inModsSection)
@@ -200,8 +200,8 @@ TreeNode? currentGroup = null;
                             {
                                 string rawName = line.Substring(1).Trim();
                                 string baseName = rawName;
-                                string note = null;
-                                string popup = null;
+                                string? note = null;
+                                string? popup = null;
                             
                                 // Extract double-brace popup first: +Title{{  }}
                                 int d1 = rawName.IndexOf("{{");
@@ -322,7 +322,14 @@ TreeNode? currentGroup = null;
                                 }
                             }
                             
-                            else if (line.StartsWith("$"))
+                            
+                            else if (currentCodeNode != null && TryParseCodeCreditsLine(line, out var creditsLine))
+                            {
+                                // Code-level credits only (ignore any global credits outside a code block)
+                                AddCreditsForNode(currentCodeNode, creditsLine);
+                            }
+
+else if (line.StartsWith("$"))
 {
 
 // v1.01 behavior: store code WITHOUT leading '$' so downstream SW formatter can reflow

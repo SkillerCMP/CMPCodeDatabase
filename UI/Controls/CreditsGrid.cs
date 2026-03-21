@@ -71,7 +71,7 @@ namespace CMPCodeDatabase.UI.Controls
             _menu.Items.Add(new ToolStripSeparator());
             var quick = new ToolStripMenuItem("Quick set role");
             foreach (var role in CommonRoles)
-                quick.DropDownItems.Add(role, null, (s, e) => SetRoleForSelected(((ToolStripItem)s).Text));
+                quick.DropDownItems.Add(role, null, (s, e) => { if (s is ToolStripItem tsi) SetRoleForSelected(tsi.Text ?? string.Empty); });
             _menu.Items.Add(quick);
             _grid.ContextMenuStrip = _menu;
 

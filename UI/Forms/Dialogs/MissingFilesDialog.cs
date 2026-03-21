@@ -37,7 +37,7 @@ namespace CMPCodeDatabase.UI.Dialogs
             {
                 Text = "Some required folders were missing and have been created:",
                 AutoSize = true,
-                Left = 16, Top = 16, Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 10, FontStyle.Bold)
+                Left = 16, Top = 16, Font = new Font((SystemFonts.MessageBoxFont?.FontFamily ?? SystemFonts.DefaultFont.FontFamily), 10, FontStyle.Bold)
             };
 
             var sb = new StringBuilder();

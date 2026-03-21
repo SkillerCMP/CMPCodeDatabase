@@ -18,7 +18,7 @@ namespace CMPCodeDatabase
     {
         private void TreeCodes_AfterSelect(object? sender, TreeViewEventArgs e)
                 {
-                    txtCodePreview.Text = e.Node?.Tag?.ToString() ?? string.Empty;
+                    txtCodePreview!.Text = e.Node?.Tag?.ToString() ?? string.Empty;
                 }
 
         private void TreeCodes_NodeMouseDoubleClick(object? sender, TreeNodeMouseClickEventArgs e)
@@ -102,23 +102,27 @@ namespace CMPCodeDatabase
                 return;
             }
             string code = Apply64BitHexBlocking(raw);
+            var meta = GetCollectorMetaForNode(node);
+
 
             // Where to send items depends on the layout mode.
             if (CMPCodeDatabase.Core.Settings.AppSettings.Instance.UseTabbedPreviewCollector
                 && collectorTab != null && !collectorTab.IsDisposed)
             {
                 if (BlockIfUnresolvedForCollector(node, code)) return;
-                collectorTab.AddItem(name, code);
+                collectorTab.AddItem(name, code, meta.Author, meta.Description);
             }
             else if (collectorWindow != null && !collectorWindow.IsDisposed)
             {
                 if (BlockIfUnresolvedForCollector(node, code)) return;
-                collectorWindow.AddItem(name, code);
+                collectorWindow.AddItem(name, code, meta.Author, meta.Description);
             }
             else
             {
                 if (BlockIfUnresolvedForCollector(node)) return;
+
                 if (!collectorFallback.ContainsKey(name)) collectorFallback[name] = code;
+                collectorFallbackMeta[name] = meta;
             }
             ShowCollectorWindow();
         }
@@ -130,7 +134,7 @@ namespace CMPCodeDatabase
                     {
                         treeGames.Nodes.Clear();
                         treeCodes.Nodes.Clear();
-                        txtCodePreview.Clear();
+                        txtCodePreview!.Clear();
                     }
                     catch { /* ignore */ }
 
@@ -147,7 +151,7 @@ namespace CMPCodeDatabase
                     if (originalCodeTemplates.TryGetValue(node, out string? tpl))
                     {
                         node.Tag = tpl;
-                        txtCodePreview.Text = tpl;
+                        txtCodePreview!.Text = tpl;
                         if (originalNodeNames.TryGetValue(node, out string? _))
                         {
                             if (appliedModNames.ContainsKey(node)) appliedModNames.Remove(node);
@@ -194,13 +198,13 @@ while (true)
     if (which < 0) which = 0;
 
     var (raw, s0, e0) = tags[which];
-        try { txtCodePreview.HideSelection = false; HighlightModRange(s0, (e0 - s0 + 1)); txtCodePreview.Select(s0, (e0 - s0 + 1)); txtCodePreview.ScrollToCaret(); txtCodePreview.Update(); } catch { }
+        try { txtCodePreview!.HideSelection = false; HighlightModRange(s0, (e0 - s0 + 1)); txtCodePreview!.Select(s0, (e0 - s0 + 1)); txtCodePreview!.ScrollToCaret(); txtCodePreview!.Update(); } catch { }
         try {
-            txtCodePreview.HideSelection = false;
+            txtCodePreview!.HideSelection = false;
             HighlightModRange(s0, (e0 - s0 + 1));
-            txtCodePreview.Select(s0, (e0 - s0 + 1));
-            txtCodePreview.ScrollToCaret();
-            txtCodePreview.Update();
+            txtCodePreview!.Select(s0, (e0 - s0 + 1));
+            txtCodePreview!.ScrollToCaret();
+            txtCodePreview!.Update();
         } catch { }
     string core = StripTagLabel(raw);
 
@@ -219,8 +223,8 @@ while (true)
             // Replace this tag instance
             tpl = tpl.Substring(0, s0) + chosen + tpl.Substring(e0 + 1);
             node.Tag = tpl;
-            txtCodePreview.Text = tpl;
-                try { txtCodePreview.HideSelection = false; txtCodePreview.Select(s0, Math.Max(0, Math.Min((e0 - s0 + 1), txtCodePreview.TextLength - s0))); txtCodePreview.ScrollToCaret(); txtCodePreview.Update(); } catch { }
+            txtCodePreview!.Text = tpl;
+                try { txtCodePreview!.HideSelection = false; txtCodePreview!.Select(s0, Math.Max(0, Math.Min((e0 - s0 + 1), txtCodePreview!.TextLength - s0))); txtCodePreview!.ScrollToCaret(); txtCodePreview!.Update(); } catch { }
 
             if (!string.IsNullOrWhiteSpace(gd.SelectedDisplay)) AppendAppliedModName(node, gd.SelectedDisplay!);
 
@@ -246,8 +250,8 @@ while (true)
             // Replace placeholder with hex bytes
             tpl = tpl.Substring(0, s0) + hex + tpl.Substring(e0 + 1);
             node.Tag = tpl;
-            txtCodePreview.Text = tpl;
-            try { txtCodePreview.HideSelection = false; txtCodePreview.Select(s0, hex.Length); txtCodePreview.ScrollToCaret(); txtCodePreview.Update(); } catch { }
+            txtCodePreview!.Text = tpl;
+            try { txtCodePreview!.HideSelection = false; txtCodePreview!.Select(s0, hex.Length); txtCodePreview!.ScrollToCaret(); txtCodePreview!.Update(); } catch { }
 
             nextStart = s0 + hex.Length;
             continue;
@@ -264,8 +268,8 @@ else if (modDefinitions.ContainsKey(raw) || modDefinitions.ContainsKey(core))
 
             tpl = tpl.Substring(0, s0) + chosenVal + tpl.Substring(e0 + 1);
             node.Tag = tpl;
-            txtCodePreview.Text = tpl;
-                try { txtCodePreview.HideSelection = false; txtCodePreview.Select(s0, Math.Max(0, Math.Min((e0 - s0 + 1), txtCodePreview.TextLength - s0))); txtCodePreview.ScrollToCaret(); txtCodePreview.Update(); } catch { }
+            txtCodePreview!.Text = tpl;
+                try { txtCodePreview!.HideSelection = false; txtCodePreview!.Select(s0, Math.Max(0, Math.Min((e0 - s0 + 1), txtCodePreview!.TextLength - s0))); txtCodePreview!.ScrollToCaret(); txtCodePreview!.Update(); } catch { }
 
             if (!string.IsNullOrWhiteSpace(dd.SelectedName)) AppendAppliedModName(node, dd.SelectedName!);
 
@@ -309,8 +313,8 @@ else if (TryParseTextAmountTag(raw, out var tBaseTxt, out var tEncToken) || TryP
 
         tpl = tpl.Substring(0, s0) + v + tpl.Substring(e0 + 1);
         node.Tag = tpl;
-        txtCodePreview.Text = tpl;
-        try { txtCodePreview.HideSelection = false; txtCodePreview.Select(s0, (e0 - s0 + 1)); txtCodePreview.ScrollToCaret(); txtCodePreview.Update(); } catch { }
+        txtCodePreview!.Text = tpl;
+        try { txtCodePreview!.HideSelection = false; txtCodePreview!.Select(s0, (e0 - s0 + 1)); txtCodePreview!.ScrollToCaret(); txtCodePreview!.Update(); } catch { }
 
         AppendAppliedModName(node, "Amount");
 
@@ -328,8 +332,8 @@ else if (TryParseTextAmountTag(raw, out var tBaseTxt, out var tEncToken) || TryP
 
             tpl = tpl.Substring(0, s0) + v + tpl.Substring(e0 + 1);
             node.Tag = tpl;
-            txtCodePreview.Text = tpl;
-                try { txtCodePreview.HideSelection = false; txtCodePreview.Select(s0, Math.Max(0, Math.Min((e0 - s0 + 1), txtCodePreview.TextLength - s0))); txtCodePreview.ScrollToCaret(); txtCodePreview.Update(); } catch { }
+            txtCodePreview!.Text = tpl;
+                try { txtCodePreview!.HideSelection = false; txtCodePreview!.Select(s0, Math.Max(0, Math.Min((e0 - s0 + 1), txtCodePreview!.TextLength - s0))); txtCodePreview!.ScrollToCaret(); txtCodePreview!.Update(); } catch { }
 
             AppendAppliedModName(node, tTitle);
 
@@ -344,8 +348,8 @@ else if (TryParseTextAmountTag(raw, out var tBaseTxt, out var tEncToken) || TryP
 
     tpl = tpl.Substring(0, s0) + eHex + tpl.Substring(e0 + 1);
     node.Tag = tpl;
-    txtCodePreview.Text = tpl;
-    try { txtCodePreview.HideSelection = false; txtCodePreview.ScrollToCaret(); txtCodePreview.Update(); } catch { }
+    txtCodePreview!.Text = tpl;
+    try { txtCodePreview!.HideSelection = false; txtCodePreview!.ScrollToCaret(); txtCodePreview!.Update(); } catch { }
 
     if (!string.IsNullOrWhiteSpace(eLabel)) AppendAppliedModName(node, eLabel);
 
@@ -368,8 +372,8 @@ else if (TryParseTextAmountTag(raw, out var tBaseTxt, out var tEncToken) || TryP
 
             tpl = tpl.Substring(0, s0) + v + tpl.Substring(e0 + 1);
             node.Tag = tpl;
-            txtCodePreview.Text = tpl;
-            try { txtCodePreview.HideSelection = false; txtCodePreview.ScrollToCaret(); txtCodePreview.Update(); } catch { }
+            txtCodePreview!.Text = tpl;
+            try { txtCodePreview!.HideSelection = false; txtCodePreview!.ScrollToCaret(); txtCodePreview!.Update(); } catch { }
 
             AppendAppliedModName(node, "Joker");
             nextStart = s0 + v.Length;
@@ -398,8 +402,8 @@ else if (TryParseTextAmountTag(raw, out var tBaseTxt, out var tEncToken) || TryP
             // Replace this tag instance with the computed value
             tpl = tpl.Substring(0, s0) + hex + tpl.Substring(e0 + 1);
             node.Tag = tpl;
-            txtCodePreview.Text = tpl;
-            try { txtCodePreview.HideSelection = false; txtCodePreview.ScrollToCaret(); txtCodePreview.Update(); } catch { }
+            txtCodePreview!.Text = tpl;
+            try { txtCodePreview!.HideSelection = false; txtCodePreview!.ScrollToCaret(); txtCodePreview!.Update(); } catch { }
 
             // Append applied label like other mods (e.g., "(H4V 120)")
             AppendAppliedModName(node, label);

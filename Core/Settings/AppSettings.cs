@@ -27,6 +27,9 @@ namespace CMPCodeDatabase.Core.Settings
         // UX: double-click MOD codes -> prompt for mods then auto-add to Collector + reset
         public bool DoubleClickResolveModsThenAddToCollector { get; set; } = false;
 
+        public bool PnachExportNotesAsDescription { get; set; } = false;
+
+
         // Save Wizard integration (Collector export)
         public string? SwGameListPath { get; set; }            // path to Save Wizard gamelist.xml
         public string? SwLastGameId { get; set; }              // last exported title id (CUSA/NPUB/etc)

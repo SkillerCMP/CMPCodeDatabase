@@ -17,7 +17,7 @@ namespace CMPCodeDatabase
         }
 
         /// <summary>Return the optional &lt;Label&gt; part, or null if absent.</summary>
-        private static string ExtractTagLabel(string tagOrCore)
+        private static string? ExtractTagLabel(string tagOrCore)
         {
             if (string.IsNullOrEmpty(tagOrCore)) return null;
             int i = tagOrCore.IndexOf('<');

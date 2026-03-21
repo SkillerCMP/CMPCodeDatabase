@@ -15,6 +15,7 @@ namespace CMPCodeDatabase
         private readonly Button btnBrowsePatchTool = new Button();        private readonly CheckBox chkOpenCollectorWhenAddingCodes = new CheckBox();
         private readonly CheckBox chkUseTabbedPreviewCollector = new CheckBox();
         private readonly CheckBox chkDoubleClickResolveModsThenAddToCollector = new CheckBox();
+        private readonly CheckBox chkPnachExportNotesAsDescription = new CheckBox();
 
         private readonly TextBox txtDbUrl = new TextBox();
         private readonly TextBox txtToolsUrl = new TextBox();
@@ -63,7 +64,9 @@ namespace CMPCodeDatabase
             chkUseTabbedPreviewCollector.AutoSize = true;
 
             chkDoubleClickResolveModsThenAddToCollector.Text = "Double-click MOD codes: prompt for MODs, then auto-add to Collector and Reset";
+            chkPnachExportNotesAsDescription.Text = "PNACH export: map Notes to description= (default off)";
             chkDoubleClickResolveModsThenAddToCollector.AutoSize = true;
+            chkPnachExportNotesAsDescription.AutoSize = true;
 
             btnOK.Text = "OK";
             btnOK.AutoSize = true;
@@ -81,7 +84,7 @@ namespace CMPCodeDatabase
                 Dock = DockStyle.Fill,
                 Padding = new Padding(12),
                 ColumnCount = 3,
-                RowCount = 8,
+                RowCount = 9,
                 AutoSize = false,
             };
 
@@ -93,6 +96,7 @@ namespace CMPCodeDatabase
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Checkbox row 1
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Checkbox row 2
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Checkbox row 3
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Checkbox row 4 (PNACH notes)
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // DB URL
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Tools URL
             layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f)); // Filler
@@ -112,17 +116,21 @@ namespace CMPCodeDatabase
             layout.Controls.Add(chkDoubleClickResolveModsThenAddToCollector, 1, 3);
             layout.SetColumnSpan(chkDoubleClickResolveModsThenAddToCollector, 2);
 
-            // Row 4: DB URL
-            layout.Controls.Add(lblDbUrl, 0, 4);
-            layout.Controls.Add(txtDbUrl, 1, 4);
+            // Row 4: checkbox
+            layout.Controls.Add(chkPnachExportNotesAsDescription, 1, 4);
+            layout.SetColumnSpan(chkPnachExportNotesAsDescription, 2);
+
+            // Row 5: DB URL
+            layout.Controls.Add(lblDbUrl, 0, 5);
+            layout.Controls.Add(txtDbUrl, 1, 5);
             layout.SetColumnSpan(txtDbUrl, 2);
 
-            // Row 5: Tools URL
-            layout.Controls.Add(lblToolsUrl, 0, 5);
-            layout.Controls.Add(txtToolsUrl, 1, 5);
+            // Row 6: Tools URL
+            layout.Controls.Add(lblToolsUrl, 0, 6);
+            layout.Controls.Add(txtToolsUrl, 1, 6);
             layout.SetColumnSpan(txtToolsUrl, 2);
 
-            // Row 7: Buttons (right aligned)
+            // Row 8: Buttons (right aligned)
             var buttonRow = new FlowLayoutPanel
             {
                 Dock = DockStyle.Fill,
@@ -137,7 +145,7 @@ namespace CMPCodeDatabase
             buttonRow.Controls.Add(btnOK);
             buttonRow.Controls.Add(btnCancel);
 
-            layout.Controls.Add(buttonRow, 0, 7);
+            layout.Controls.Add(buttonRow, 0, 8);
             layout.SetColumnSpan(buttonRow, 3);
 
             Controls.Add(layout);
@@ -186,6 +194,7 @@ namespace CMPCodeDatabase
             txtPatchTool.Text = s.PatchToolPath ?? string.Empty;            chkOpenCollectorWhenAddingCodes.Checked = s.OpenCollectorOnAdd;
             chkUseTabbedPreviewCollector.Checked = s.UseTabbedPreviewCollector;
             chkDoubleClickResolveModsThenAddToCollector.Checked = s.DoubleClickResolveModsThenAddToCollector;
+            chkPnachExportNotesAsDescription.Checked = s.PnachExportNotesAsDescription;
             txtDbUrl.Text = s.DatabaseDownloadUrl ?? string.Empty;
             txtToolsUrl.Text = s.ToolsDownloadUrl ?? string.Empty;
         }
@@ -196,8 +205,9 @@ namespace CMPCodeDatabase
             s.PatchToolPath = txtPatchTool.Text?.Trim();            s.OpenCollectorOnAdd = chkOpenCollectorWhenAddingCodes.Checked;
             s.UseTabbedPreviewCollector = chkUseTabbedPreviewCollector.Checked;
             s.DoubleClickResolveModsThenAddToCollector = chkDoubleClickResolveModsThenAddToCollector.Checked;
-            s.DatabaseDownloadUrl = txtDbUrl.Text?.Trim();
-            s.ToolsDownloadUrl = txtToolsUrl.Text?.Trim();
+                        s.PnachExportNotesAsDescription = chkPnachExportNotesAsDescription.Checked;
+s.DatabaseDownloadUrl = txtDbUrl.Text?.Trim() ?? string.Empty;
+            s.ToolsDownloadUrl = txtToolsUrl.Text?.Trim() ?? string.Empty;
             s.Save();
             return true;
         }

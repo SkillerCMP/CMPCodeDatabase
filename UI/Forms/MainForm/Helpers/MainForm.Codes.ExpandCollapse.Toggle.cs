@@ -6,7 +6,7 @@ namespace CMPCodeDatabase
 {
     public partial class MainForm : Form
     {
-        private Button _btnExpandToggle;
+        private Button? _btnExpandToggle;
 
         /// <summary>
         /// Call once in OnShown: try { WireCodesExpandCollapseToggle(); } catch {}
@@ -100,18 +100,18 @@ namespace CMPCodeDatabase
         }
 
         // Fire on several tree events (expand/collapse/select) to keep label correct
-        private void TreeCodes_AfterAny_UpdateToggle(object sender, EventArgs e)
+        private void TreeCodes_AfterAny_UpdateToggle(object? sender, EventArgs e)
         {
             UpdateExpandToggleLabel();
         }
 
         // If the control is recreated/shown, refresh the label
-        private void TreeCodes_HandleCreated_UpdateToggle(object sender, EventArgs e)
+        private void TreeCodes_HandleCreated_UpdateToggle(object? sender, EventArgs e)
         {
             // Defer a tick to allow caller to finish repopulating
             try { this.BeginInvoke((Action)UpdateExpandToggleLabel); } catch { UpdateExpandToggleLabel(); }
         }
-        private void TreeCodes_VisibleChanged_UpdateToggle(object sender, EventArgs e)
+        private void TreeCodes_VisibleChanged_UpdateToggle(object? sender, EventArgs e)
         {
             UpdateExpandToggleLabel();
         }
@@ -151,7 +151,10 @@ namespace CMPCodeDatabase
             bool isGroup = n.Nodes != null && n.Nodes.Count > 0;
             if (isGroup && !n.IsExpanded) return false;
 
-            foreach (TreeNode c in n.Nodes)
+            var children = n.Nodes;
+            if (children == null) return true;
+
+            foreach (TreeNode c in children)
                 if (!IsGroupSubtreeFullyExpanded(c))
                     return false;
 
@@ -179,7 +182,7 @@ namespace CMPCodeDatabase
         }
 
         // CHANGE #2: Bring back hotkeys (Ctrl+E expand, Ctrl+Shift+E collapse) when Codes tree has focus
-        private void MainForm_Keys_ExpandCollapse_TOGGLE(object sender, KeyEventArgs e)
+        private void MainForm_Keys_ExpandCollapse_TOGGLE(object? sender, KeyEventArgs e)
         {
             if (!(treeCodes?.Focused == true || (treeCodes?.ContainsFocus ?? false))) return;
 
@@ -196,7 +199,7 @@ namespace CMPCodeDatabase
         }
 
         // --- utility: find a button by Text (contains) in the whole control tree ---
-        private Button FindDeepButtonByText(Control root, string containsLower)
+        private Button? FindDeepButtonByText(Control? root, string containsLower)
         {
             if (root == null) return null;
             containsLower = (containsLower ?? "").ToLowerInvariant();

@@ -57,6 +57,8 @@ namespace CMPCodeDatabase
 
             string name = GetCopyName(node);
             string code = Apply64BitHexBlocking(raw);
+            var meta = GetCollectorMetaForNode(node);
+
 
             string sig = name + "\n" + code;
             if (_lastAutoSentSignature == sig) return;
@@ -70,17 +72,18 @@ namespace CMPCodeDatabase
                     && collectorTab != null && !collectorTab.IsDisposed)
                 {
                     if (BlockIfUnresolvedForCollector(null, code)) return;
-                    collectorTab.AddItem(name, code);
+                    collectorTab.AddItem(name, code, meta.Author, meta.Description);
                     if (IsOpenCollectorOnAddEnabled(s)) EnsureCollectorVisible();
                 }
                 else if (collectorWindow != null && !collectorWindow.IsDisposed)
                 {
                     if (BlockIfUnresolvedForCollector(null, code)) return;
-                    collectorWindow.AddItem(name, code);
+                    collectorWindow.AddItem(name, code, meta.Author, meta.Description);
                 }
                 else
                 {
                     collectorFallback[name] = code;
+                    collectorFallbackMeta[name] = meta;
                     if (IsOpenCollectorOnAddEnabled(s)) EnsureCollectorVisible();
                 }
                 ResetCode(node);

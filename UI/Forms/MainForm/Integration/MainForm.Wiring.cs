@@ -17,8 +17,8 @@ namespace CMPCodeDatabase
     public partial class MainForm : Form
     {
         // === Added fields for Joker wiring ===
-        private ToolStripMenuItem _ctxOpenJokerItem;
-        private ContextMenuStrip _jokerMenuBoundTo;
+        private ToolStripMenuItem? _ctxOpenJokerItem;
+        private ContextMenuStrip? _jokerMenuBoundTo;
 
         protected override void OnHandleCreated(EventArgs e)
         {
@@ -62,8 +62,9 @@ namespace CMPCodeDatabase
                 rtb.ContextMenuStrip = new ContextMenuStrip();
         }
 
-        private void EnsureJokerMenuItem(ContextMenuStrip menu)
+        private void EnsureJokerMenuItem(ContextMenuStrip? menu)
         {
+            if (menu == null) return;
             if (menu == null) return;
 
             if (_jokerMenuBoundTo == menu && _ctxOpenJokerItem != null)
@@ -106,7 +107,7 @@ namespace CMPCodeDatabase
             _jokerMenuBoundTo = menu;
         }
 
-        private void ContextMenuStrip_Opening_ForJoker(object sender, CancelEventArgs e)
+        private void ContextMenuStrip_Opening_ForJoker(object? sender, CancelEventArgs e)
         {
             var rtb = GetActiveEditor();
             bool hasToken = false;
@@ -119,7 +120,7 @@ namespace CMPCodeDatabase
         }
 
         // Replace with your actual accessor if your editor is wrapped
-        private RichTextBox GetActiveEditor()
+        private RichTextBox? GetActiveEditor()
         {
             return this.ActiveControl as RichTextBox;
         }

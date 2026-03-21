@@ -30,7 +30,13 @@ namespace CMPCodeDatabase
             if (collectorWindow == null || collectorWindow.IsDisposed)
             {
                 collectorWindow = new CollectorForm();
-                foreach (var kv in collectorFallback) collectorWindow.AddItem(kv.Key, kv.Value);
+                foreach (var kv in collectorFallback)
+                {
+                    if (collectorFallbackMeta.TryGetValue(kv.Key, out var meta))
+                        collectorWindow.AddItem(kv.Key, kv.Value, meta.Author, meta.Description);
+                    else
+                        collectorWindow.AddItem(kv.Key, kv.Value);
+                }
             }
             if (collectorWindow.Visible) collectorWindow.Hide(); else collectorWindow.Show(this);
         }

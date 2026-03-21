@@ -31,7 +31,7 @@ namespace CMPCodeDatabase
                 var copyAll     = FindControlByText<Button>(this, "Copy All");
                 var clearBtn    = FindControlByText<Button>(this, "Clear");
 
-                FlowLayoutPanel host = selectAll.Parent as FlowLayoutPanel;
+                FlowLayoutPanel? host = selectAll.Parent as FlowLayoutPanel;
                 if (host == null || host.IsDisposed)
                 {
                     host = new FlowLayoutPanel
@@ -47,7 +47,7 @@ namespace CMPCodeDatabase
                     host.BringToFront();
                 }
 
-                void move(Control c)
+                void move(Control? c)
                 {
                     if (c == null) return;
                     if (c.Parent == host) return;

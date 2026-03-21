@@ -19,11 +19,11 @@ namespace CMPCodeDatabase
                                                       out string endian,
                                                       out string boxLabel)
         {
-            title = "Amount"; defHex = ""; type = "HEX"; endian = "BIG"; boxLabel = null;
+            title = "Amount"; defHex = ""; type = "HEX"; endian = "BIG"; boxLabel = string.Empty;
             if (string.IsNullOrWhiteSpace(tag)) return false;
             if (!tag.StartsWith("Amount:", StringComparison.OrdinalIgnoreCase)) return false;
 
-            boxLabel = ExtractTagLabel(tag);
+            boxLabel = ExtractTagLabel(tag) ?? string.Empty;
             string core = StripTagLabel(tag); // e.g. Amount:05F5E0FF:HEX:BIG
 
             var parts = core.Split(':');

@@ -25,7 +25,7 @@ namespace CMPCodeDatabase
         /// Prefer the actual code being sent; if that's empty, try node.Tag; finally the original template.
         /// 'node' may be null in contexts that don't have a TreeNode.
         /// </summary>
-        private bool BlockIfUnresolvedForCollector(TreeNode node, string codeOverride = null)
+        private bool BlockIfUnresolvedForCollector(TreeNode? node, string? codeOverride = null)
         {
             string codeText = codeOverride ?? string.Empty;
 
@@ -35,8 +35,7 @@ namespace CMPCodeDatabase
 
                 if (string.IsNullOrWhiteSpace(codeText) && originalCodeTemplates != null)
                 {
-                    string tpl;
-                    if (originalCodeTemplates.TryGetValue(node, out tpl) && tpl != null)
+                    if (originalCodeTemplates.TryGetValue(node, out var tpl) && !string.IsNullOrWhiteSpace(tpl))
                         codeText = tpl;
                 }
             }

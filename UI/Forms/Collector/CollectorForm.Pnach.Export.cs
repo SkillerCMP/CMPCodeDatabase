@@ -116,13 +116,20 @@ namespace CMPCodeDatabase
             var rxName    = new Regex(@"(?mi)^\s*(?:\^3\s*=\s*NAME|NAME)\s*:\s*(.+?)\s*$");
             var rxCredits = new Regex(@"(?mi)^[%#]\s*Credits\s*:\s*(.+)$");
 
-            string topFile = null, topName = null, topHash = null;
+            string? topFile = null, topName = null, topHash = null;
             var creditsSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var kv in entries)
             {
+                // Include sidecar author= metadata in top credits line (if present)
+                if (TryGetMeta(kv.Key, out var meta) && !string.IsNullOrWhiteSpace(meta.Author))
+                {
+                    foreach (var who in SplitPeople(meta.Author))
+                        creditsSet.Add(who);
+                }
+
                 using var sr = new StringReader(kv.Value ?? string.Empty);
-                for (string line = sr.ReadLine(); line != null; line = sr.ReadLine())
+                for (string? line = sr.ReadLine(); line != null; line = sr.ReadLine())
                 {
                     var mF = rxFile.Match(line);    if (mF.Success && topFile == null) topFile = mF.Groups[1].Value.Trim();
                     var mH = rxHash.Match(line);    if (mH.Success && topHash == null) topHash = mH.Groups[1].Value.Trim().ToUpperInvariant();
@@ -156,8 +163,16 @@ namespace CMPCodeDatabase
             {
                 var title = kv.Key ?? "PATCH";
                 sb.AppendLine("[" + title + "]");
+
+                // Optional metadata (not shown in Collector UI)
+                var author = GetPnachAuthorForEntry(title);
+                if (!string.IsNullOrWhiteSpace(author)) sb.AppendLine("author=" + author);
+
+                var desc = GetPnachDescriptionForEntry(title);
+                if (!string.IsNullOrWhiteSpace(desc)) sb.AppendLine("description=" + desc);
+
                 using var sr = new StringReader(kv.Value ?? string.Empty);
-                for (string line = sr.ReadLine(); line != null; line = sr.ReadLine())
+                for (string? line = sr.ReadLine(); line != null; line = sr.ReadLine())
                 {
                     var raw = line.Trim();
                     if (raw.Length == 0) continue;
@@ -199,13 +214,13 @@ namespace CMPCodeDatabase
         /// <summary>
         /// Guess a default .pnach filename from collected meta (^1=HASH).
         /// </summary>
-        private string GuessPnachFileName(IReadOnlyList<KeyValuePair<string,string>> entries)
+        private string? GuessPnachFileName(IReadOnlyList<KeyValuePair<string,string>> entries)
         {
             var rxHash = new Regex(@"(?mi)^\s*(?:\^1\s*=\s*HASH|HASH|CRC)\s*:\s*([0-9A-F]{8})\b.*$");
             foreach (var kv in entries)
             {
                 using var sr = new StringReader(kv.Value ?? string.Empty);
-                for (string line = sr.ReadLine(); line != null; line = sr.ReadLine())
+                for (string? line = sr.ReadLine(); line != null; line = sr.ReadLine())
                 {
                     var m = rxHash.Match(line);
                     if (m.Success) return m.Groups[1].Value.ToUpperInvariant() + ".pnach";

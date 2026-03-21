@@ -351,8 +351,9 @@ private void TreeCodes_DrawNode_WithRightPad(object? sender, DrawTreeNodeEventAr
 {
     e.DrawDefault = false;                         // we'll paint the label area ourselves
 
-    var tv   = (TreeView)sender!;
-    var font = e.Node.NodeFont ?? tv.Font;
+    if (sender is not TreeView tv) { e.DrawDefault = true; return; }
+
+    var font = e.Node?.NodeFont ?? tv.Font;
 
     const int LeftPad  = 6;                       // gap between checkbox column and text
     const int MaxExtra = 64;                      // safety cap for extra width
@@ -360,7 +361,7 @@ private void TreeCodes_DrawNode_WithRightPad(object? sender, DrawTreeNodeEventAr
 
     // How wide is the text really (in this font)?
     int textW   = TextRenderer.MeasureText(
-                    e.Graphics, e.Node.Text ?? string.Empty, font,
+                    e.Graphics, e.Node?.Text ?? string.Empty, font,
                     new Size(int.MaxValue, int.MaxValue), flags).Width;
 
     // Base tail at ~12px (DPI-adjusted), plus any spill beyond default bounds
@@ -382,7 +383,7 @@ private void TreeCodes_DrawNode_WithRightPad(object? sender, DrawTreeNodeEventAr
 
     // Draw the text into that same area
     var fore = selected ? SystemColors.HighlightText : tv.ForeColor;
-    TextRenderer.DrawText(e.Graphics, e.Node.Text ?? string.Empty, font, rectText, fore, flags);
+    TextRenderer.DrawText(e.Graphics, e.Node?.Text ?? string.Empty, font, rectText, fore, flags);
 
     // Optional: focus rectangle matching the painted label region
     if (selected && tv.Focused)

@@ -166,9 +166,10 @@ namespace CMPCodeDatabase
             // Reset search state and base cache when switching DB
             try
             {
+                _suppressGameSearchTextChanged = true;
                 _txtGameSearch?.Clear();
-
-                // Clear base so no stale list is reused
+                _suppressGameSearchTextChanged = false;
+// Clear base so no stale list is reused
                 _allGames.Clear();
                 _baseSig = 0;
                 _lastHitIndex = -1;

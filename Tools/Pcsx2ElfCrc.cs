@@ -12,14 +12,14 @@ namespace CMPCodeDatabase.Tools
     /// </summary>
     public static class Pcsx2ElfCrc
     {
-        public static string ComputeFromFile(string path)
+        public static string? ComputeFromFile(string path)
         {
             if (string.IsNullOrWhiteSpace(path) || !File.Exists(path)) return null;
             using var fs = File.OpenRead(path);
             return Compute(fs);
         }
 
-        public static string Compute(Stream stream)
+        public static string? Compute(Stream? stream)
         {
             if (stream == null) return null;
             uint x = 0;

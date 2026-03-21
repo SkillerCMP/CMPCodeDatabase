@@ -22,8 +22,9 @@ namespace CMPCodeDatabase
             treeCodes.AfterCheck += TreeCodes_AfterCheck_CASCADE;
         }
 
-        private void TreeCodes_AfterCheck_CASCADE(object sender, TreeViewEventArgs e)
+        private void TreeCodes_AfterCheck_CASCADE(object? sender, TreeViewEventArgs e)
         {
+            if (e.Node == null) return;
             if (_suppressCheckCascade) return;
 
             try

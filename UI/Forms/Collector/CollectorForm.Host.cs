@@ -31,6 +31,7 @@ namespace CMPCodeDatabase
 
         // Compatibility wrappers (so older MainForm code can keep calling CollectorForm.*)
         public void AddItem(string name, string code) => Collector.AddItem(name, code);
+        public void AddItem(string name, string code, string? author, string? description) => Collector.AddItem(name, code, author, description);
         public void SetActiveGame(string gameName) => Collector.SetActiveGame(gameName);
         public bool HasAnyItems() => Collector.HasAnyItems();
     }

@@ -64,13 +64,13 @@ namespace CMPCodeDatabase
         private static string Norm_SHORT(string s) =>
             (s ?? string.Empty).Replace("&", "").Trim().TrimEnd('.');
 
-        private Button FindButtonByText_SHORT(string text)
+        private Button? FindButtonByText_SHORT(string text)
         {
             var want = Norm_SHORT(text).ToLowerInvariant();
             return FindDeep_SHORT<Button>(this, b => Norm_SHORT(b.Text).Equals(want, StringComparison.OrdinalIgnoreCase));
         }
 
-        private Button FindButtonByTextContains_SHORT(string part)
+        private Button? FindButtonByTextContains_SHORT(string part)
         {
             var want = Norm_SHORT(part).ToLowerInvariant();
             return FindDeep_SHORT<Button>(this, b => Norm_SHORT(b.Text).ToLowerInvariant().Contains(want));
@@ -114,7 +114,7 @@ namespace CMPCodeDatabase
             ClickByTextExact_SHORT("Clear");
         }
 
-        private static T FindDeep_SHORT<T>(Control root, Func<T, bool> pred) where T : Control
+        private static T? FindDeep_SHORT<T>(Control root, Func<T, bool> pred) where T : Control
         {
             foreach (Control c in root.Controls)
             {

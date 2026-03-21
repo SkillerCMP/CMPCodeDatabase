@@ -32,7 +32,11 @@ namespace CMPCodeDatabase
                 foreach (var kv in collectorFallback)
                 {
                     if (BlockIfUnresolvedForCollector(null, kv.Value)) continue;
-                    collectorWindow.AddItem(kv.Key, kv.Value);
+
+                    if (collectorFallbackMeta.TryGetValue(kv.Key, out var meta))
+                        collectorWindow.AddItem(kv.Key, kv.Value, meta.Author, meta.Description);
+                    else
+                        collectorWindow.AddItem(kv.Key, kv.Value);
                 }
             }
             if (!collectorWindow.Visible) collectorWindow.Show(this);

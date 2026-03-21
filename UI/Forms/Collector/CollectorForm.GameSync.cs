@@ -36,6 +36,7 @@ namespace CMPCodeDatabase
             {
                 clbCollector.Items.Clear();
                 collectorCodeMap.Clear();
+                ClearMeta();
             }
             catch { /* non-fatal */ }
         }
