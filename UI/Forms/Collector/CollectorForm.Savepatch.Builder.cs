@@ -23,11 +23,16 @@ namespace CMPCodeDatabase
 {
     public partial class CollectorControl : UserControl
     {
+        private static readonly Regex SavepatchFileHeaderRegex = new(@"^\s*\^4\s*=\s*FILE\s*:\s*(.+)\s*$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex SavepatchHashHeaderRegex = new(@"^\s*\^1\s*=\s*Hash\s*:\s*(.+)\s*$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex SavepatchGameHeaderRegex = new(@"^\s*\^2\s*=\s*GameID\s*:\s*(.+)\s*$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex SavepatchGameIdRegex = new(@"\b[A-Za-z]{4}\d{5}\b", RegexOptions.Compiled);
+
         private string BuildTempSavepatch(IReadOnlyList<KeyValuePair<string,string>> entries, out string contentOut)
         {
-            var rxFile = new Regex(@"^\s*\^4\s*=\s*FILE\s*:\s*(.+)\s*$", RegexOptions.IgnoreCase);
-            var rxHash = new Regex(@"^\s*\^1\s*=\s*Hash\s*:\s*(.+)\s*$", RegexOptions.IgnoreCase);
-            var rxGame = new Regex(@"^\s*\^2\s*=\s*GameID\s*:\s*(.+)\s*$", RegexOptions.IgnoreCase);
+            var rxFile = SavepatchFileHeaderRegex;
+            var rxHash = SavepatchHashHeaderRegex;
+            var rxGame = SavepatchGameHeaderRegex;
 
             var files = new LinkedList<string>();
             var seenFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -72,7 +77,7 @@ namespace CMPCodeDatabase
                         if (mG.Success)
                         {
                             // Accept either a single ID or a CSV/whitespace list on one line.
-                            foreach (Match m in Regex.Matches(mG.Groups[1].Value, @"\b[A-Za-z]{4}\d{5}\b"))
+                            foreach (Match m in SavepatchGameIdRegex.Matches(mG.Groups[1].Value))
                             {
                                 var id = m.Value.Trim().ToUpperInvariant();
                                 if (seenGameIds.Add(id)) gameIds.AddLast(id);

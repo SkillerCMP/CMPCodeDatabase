@@ -30,9 +30,9 @@ namespace CMPCodeDatabase
             public string? Tag;
             public int ImageIndex;
             public int SelectedImageIndex;
+            public string SearchText = string.Empty;
         }
         private List<GameEntry> _allGames = [];
-        private int _baseSig = 0;
         private bool _filteringInternal = false;
         private bool _suppressGameSearchTextChanged = false;
 
@@ -77,10 +77,11 @@ namespace CMPCodeDatabase
             // Wire search behavior
             _txtGameSearch.TextChanged += (s, e) =>
             {
-                                if (_suppressGameSearchTextChanged) return;
-// Keep base snapshot fresh only when the visible list grew (external reload)
+                if (_suppressGameSearchTextChanged) return;
+
+                // Keep base snapshot fresh only when the visible list grew (external reload).
+                CaptureCurrentAsBaseIfBetter();
                 ApplyGamesFilter(_txtGameSearch.Text);
-            CaptureCurrentAsBaseIfBetter();
             };
             _txtGameSearch.KeyDown += (s, e) =>
             {
@@ -94,39 +95,30 @@ namespace CMPCodeDatabase
 
         private void CaptureCurrentAsBaseIfBetter()
         {
-            // If we are rebuilding due to our own filtering, ignore
+            // If we are rebuilding due to our own filtering, ignore.
             if (_filteringInternal) return;
 
-            
-        // Do not capture while a filter is active; only capture the base
-        // when the search box is empty (prevents caching the filtered list).
-        if (!string.IsNullOrWhiteSpace(_txtGameSearch?.Text))
-            return;
-// If no base yet, or current tree has MORE items (likely external reload), refresh base
+            // Do not capture while a filter is active; only capture the base
+            // when the search box is empty (prevents caching the filtered list).
+            if (!string.IsNullOrWhiteSpace(_txtGameSearch?.Text))
+                return;
+
+            // If no base yet, or current tree has MORE items (likely external reload), refresh base.
             if (_allGames.Count == 0 || treeGames.Nodes.Count > _allGames.Count)
             {
-                _allGames = treeGames.Nodes.Cast<TreeNode>().Select(n => new GameEntry
+                _allGames = treeGames.Nodes.Cast<TreeNode>().Select(n =>
                 {
-                    Text = n.Text ?? "",
-                    Tag = n.Tag?.ToString(),
-                    ImageIndex = n.ImageIndex,
-                    SelectedImageIndex = n.SelectedImageIndex
+                    var text = n.Text ?? string.Empty;
+                    var tag = n.Tag?.ToString();
+                    return new GameEntry
+                    {
+                        Text = text,
+                        Tag = tag,
+                        ImageIndex = n.ImageIndex,
+                        SelectedImageIndex = n.SelectedImageIndex,
+                        SearchText = text + "\n" + (tag ?? string.Empty)
+                    };
                 }).ToList();
-                _baseSig = ComputeSig(_allGames);
-            }
-        }
-
-        private static int ComputeSig(List<GameEntry> list)
-        {
-            unchecked
-            {
-                int h = 17;
-                foreach (var g in list)
-                {
-                    h = h * 31 + (g.Text?.GetHashCode() ?? 0);
-                    h = h * 31 + (g.Tag?.GetHashCode() ?? 0);
-                }
-                return h;
             }
         }
 
@@ -148,10 +140,9 @@ namespace CMPCodeDatabase
                 return;
             }
 
-            // Filter by name or path/ID in Tag
+            // Filter by prebuilt searchable text (name + path/ID).
             var filtered = _allGames.Where(g =>
-                (g.Text?.IndexOf(q, StringComparison.OrdinalIgnoreCase) ?? -1) >= 0 ||
-                (g.Tag?.IndexOf(q, StringComparison.OrdinalIgnoreCase) ?? -1) >= 0
+                g.SearchText.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0
             ).ToList();
 
             RebuildGamesTree(filtered);

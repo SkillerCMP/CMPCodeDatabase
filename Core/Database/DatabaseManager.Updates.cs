@@ -1,59 +1,35 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// CMPCodeDatabase — File: Core/Database/DatabaseManager.Updates.cs
+// Purpose: Delta-update download flow for DatabaseManager.
+// Notes:
+//  • Split from DatabaseManager.cs during cleanup pass 16.
+//  • Behavior intentionally unchanged.
+// ─────────────────────────────────────────────────────────────────────────────
+
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
-using System.Security.Cryptography;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using CMPCodeDatabase.UI.Dialogs;
 using CMPCodeDatabase.Core.Diagnostics;
+using CMPCodeDatabase.UI.Dialogs;
 
 namespace CMPCodeDatabase;
 
 public static partial class DatabaseManager
 {
-    // Remote manifest location (default). You can swap this later to a different host without code changes.
-    public const string DefaultManifestUrl = "https://drive.google.com/uc?export=download&id=1UGa5b3AnhWMSA7vNAhWB8qXTJWZkrOiK";
-
-    private static readonly HttpClient _http = new(new HttpClientHandler { AutomaticDecompression = System.Net.DecompressionMethods.All });
-    private static readonly long ProgressUpdateMinTicks = TimeSpan.FromMilliseconds(100).Ticks;
-
-    private static bool ShouldReportProgress(ref long lastProgressTicksUtc)
-    {
-        var nowTicks = DateTime.UtcNow.Ticks;
-        var lastTicks = Interlocked.Read(ref lastProgressTicksUtc);
-        if (nowTicks - lastTicks < ProgressUpdateMinTicks)
-            return false;
-
-        return Interlocked.CompareExchange(ref lastProgressTicksUtc, nowTicks, lastTicks) == lastTicks;
-    }
-
-    public static string GetLocalDatabaseRoot()
-        => System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Files", "Database");
-
-    public static async Task DownloadAllDatabasesAsync(IWin32Window owner)
-    {
-        var manifest = await GetRemoteManifestAsync(CancellationToken.None);
-        await DownloadDatabasesAsync(owner, manifest.Databases.ToArray(), promptBeforeDownloading: false);
-    }
-
-    public static async Task DownloadDatabasesAsync(IWin32Window owner, IReadOnlyList<ManifestDatabase> databases, bool promptBeforeDownloading)
+    /// <summary>
+    /// Download only files that are missing or changed for the selected databases (delta update).
+    /// This is intended for the "Check for Database Updates…" flow.
+    /// </summary>
+    public static async Task DownloadDatabaseUpdatesAsync(IWin32Window owner, IReadOnlyList<ManifestDatabase> databases)
     {
         if (databases.Count == 0) return;
 
         var root = GetLocalDatabaseRoot();
         Directory.CreateDirectory(root);
-
-        if (promptBeforeDownloading)
-        {
-            var msg = "Download the following databases?\n\n" + string.Join("\n", databases.Select(d => "- " + d.Name));
-            var confirm = MessageBox.Show(owner, msg, "Download Databases", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (confirm != DialogResult.Yes) return;
-        }
 
         using var progress = new DatabaseProgressDialog();
         using var cts = new CancellationTokenSource();
@@ -69,21 +45,21 @@ public static partial class DatabaseManager
         {
             foreach (var db in databases)
             {
-                await DownloadDatabaseAsync(db, root, progress, cts.Token).ConfigureAwait(true);
+                await DownloadDatabaseDeltaAsync(db, root, progress, cts.Token).ConfigureAwait(true);
             }
 
-            progress.SetDone("Download complete.");
-            MessageBox.Show(owner, "Database download complete.", "CMPCodeDatabase", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            progress.SetDone("Update complete.");
+            MessageBox.Show(owner, "Database update complete.", "CMPCodeDatabase", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
         catch (OperationCanceledException)
         {
             progress.SetDone("Cancelled.");
-            MessageBox.Show(owner, "Database download cancelled.", "CMPCodeDatabase", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show(owner, "Database update cancelled.", "CMPCodeDatabase", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
         catch (Exception ex)
         {
-            progress.SetDone("Download failed.");
-            MessageBox.Show(owner, "Database download failed:\n\n" + ex.Message, "CMPCodeDatabase", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            progress.SetDone("Update failed.");
+            MessageBox.Show(owner, "Database update failed:\n\n" + ex.Message, "CMPCodeDatabase", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
         finally
         {
@@ -91,19 +67,61 @@ public static partial class DatabaseManager
         }
     }
 
-    
-    private static async Task DownloadDatabaseAsync(ManifestDatabase db, string root, DatabaseProgressDialog progress, CancellationToken ct)
+    private static bool NeedsDownload(string dbDir, ManifestDatabase db, ManifestFile file)
+    {
+        var filePath = file.Path ?? "";
+        if (string.IsNullOrWhiteSpace(filePath)) return true;
+
+        var rel = SanitizeRelativePath(filePath);
+        var target = System.IO.Path.Combine(dbDir, rel);
+
+        if (!File.Exists(target)) return true;
+
+        // Prefer SHA1 if available (quick pre-check by size first).
+        if (!string.IsNullOrWhiteSpace(file.Sha1))
+        {
+            if (file.Size > 0)
+            {
+                var localSize = new FileInfo(target).Length;
+                if (localSize != file.Size) return true;
+            }
+
+            var sha1 = ComputeSha1Hex(target);
+            return !sha1.Equals(file.Sha1, StringComparison.OrdinalIgnoreCase);
+        }
+
+        // Fallback: size compare
+        if (file.Size > 0)
+        {
+            var size = new FileInfo(target).Length;
+            return size != file.Size;
+        }
+
+        // No reliable metadata; treat as "up to date"
+        return false;
+    }
+
+    private static async Task DownloadDatabaseDeltaAsync(ManifestDatabase db, string root, DatabaseProgressDialog progress, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(db.Name)) return;
 
         var dbDir = System.IO.Path.Combine(root, SanitizeFolderName(db.Name));
         Directory.CreateDirectory(dbDir);
 
-        var total = db.Files.Count;
-        if (total <= 0) return;
+        var candidates = db.Files ?? new List<ManifestFile>();
+        if (candidates.Count == 0) return;
+
+        // Filter to only missing/changed files.
+        var toDownload = candidates.Where(f => NeedsDownload(dbDir, db, f)).ToList();
+        if (toDownload.Count == 0)
+        {
+            progress.SetProgress(db.Name, 0, 0, "(up to date)");
+            return;
+        }
+
+        var total = toDownload.Count;
 
         // Download multiple files at a time for speed (I/O bound).
-        // Limit concurrency to avoid hammering the network / Drive throttling.
         var maxParallel = Math.Clamp(Environment.ProcessorCount, 2, 8);
         using var sem = new SemaphoreSlim(maxParallel, maxParallel);
 
@@ -121,8 +139,6 @@ public static partial class DatabaseManager
                 if (string.IsNullOrWhiteSpace(filePath))
                     throw new InvalidOperationException($"Manifest contains an empty file path for database '{db.Name}'.");
 
-                // Optional: show "working on" this file (doesn't increment done yet).
-                // Throttle these interim updates so parallel downloads do not spam the UI thread.
                 if (ShouldReportProgress(ref lastProgressTicksUtc))
                     progress.SetProgress(db.Name, Math.Max(0, Volatile.Read(ref done)), total, filePath);
 
@@ -131,7 +147,6 @@ public static partial class DatabaseManager
 
                 Directory.CreateDirectory(System.IO.Path.GetDirectoryName(target)!);
 
-                // Download to unique temp, verify, then replace
                 var tmp = target + "." + Guid.NewGuid().ToString("N") + ".tmp";
                 try
                 {
@@ -149,7 +164,6 @@ public static partial class DatabaseManager
                 }
                 finally
                 {
-                    // Clean temp if something went wrong before the move.
                     if (File.Exists(tmp))
                     {
                         try { File.Delete(tmp); } catch (Exception ex) { SafeLog.Write("DatabaseManager.TempCleanup", ex, tmp); }
@@ -165,7 +179,7 @@ public static partial class DatabaseManager
             }
         }
 
-        var tasks = db.Files.Select(DownloadOneAsync).ToArray();
+        var tasks = toDownload.Select(DownloadOneAsync).ToArray();
         await Task.WhenAll(tasks).ConfigureAwait(false);
     }
 }

@@ -36,10 +36,10 @@ public partial class MainForm
         using var dlg = new DatabasePickerDialog();
         if (dlg.ShowDialog(this) != DialogResult.OK) return;
 
-        var selected = dlg.SelectedDatabase;
-        if (selected is null) return;
+        var selected = dlg.SelectedDatabases;
+        if (selected.Length == 0) return;
 
-        await DatabaseManager.DownloadDatabasesAsync(this, new[] { selected }, promptBeforeDownloading: false);
+        await DatabaseManager.DownloadDatabasesAsync(this, selected, promptBeforeDownloading: false);
         // Refresh selector if we’re pointing at Files\Database
         LoadDatabaseSelector_FilesRoot();
     }

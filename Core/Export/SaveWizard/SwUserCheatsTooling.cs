@@ -10,6 +10,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Xml;
@@ -31,7 +32,8 @@ namespace CMPCodeDatabase.Core.Export.SaveWizard
     {
         public static List<GameListGame> Load(string path)
         {
-            var doc = XDocument.Load(path, LoadOptions.None);
+            using var xmlStream = OpenGamelistXmlStream(path);
+            var doc = XDocument.Load(xmlStream, LoadOptions.None);
             var games = new List<GameListGame>();
 
             foreach (var g in doc.Descendants("game"))
@@ -70,6 +72,37 @@ namespace CMPCodeDatabase.Core.Export.SaveWizard
             }
 
             return games;
+        }
+
+
+        private static Stream OpenGamelistXmlStream(string path)
+        {
+            var fileStream = File.OpenRead(path);
+            try
+            {
+                if (IsGZipStream(fileStream))
+                    return new GZipStream(fileStream, CompressionMode.Decompress);
+
+                return fileStream;
+            }
+            catch
+            {
+                fileStream.Dispose();
+                throw;
+            }
+        }
+
+        private static bool IsGZipStream(Stream stream)
+        {
+            if (!stream.CanSeek)
+                return false;
+
+            var originalPosition = stream.Position;
+            var header = new byte[2];
+            var read = stream.Read(header, 0, header.Length);
+            stream.Position = originalPosition;
+
+            return read == 2 && header[0] == 0x1F && header[1] == 0x8B;
         }
 
         public static GameListGame? FindGameByAnyId(List<GameListGame> games, string id)

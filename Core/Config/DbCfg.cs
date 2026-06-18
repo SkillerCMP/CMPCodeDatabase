@@ -16,6 +16,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using CMPCodeDatabase.Core.Settings;
+using CMPCodeDatabase.Core.Diagnostics;
 
 namespace CMPCodeDatabase
 {
@@ -78,8 +79,9 @@ namespace CMPCodeDatabase
                     _mapNormalized = mapN;
                     _lastLoad = ts;
                 }
-                catch
+                catch (Exception ex)
                 {
+                    SafeLog.Write("DbCfg.EnsureLoaded", ex);
                     _map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                     _mapNormalized = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                     _lastLoad = DateTime.UtcNow;
@@ -127,7 +129,10 @@ namespace CMPCodeDatabase
                                    .FirstOrDefault(f => string.Equals(Path.GetFileName(f), exeName, StringComparison.OrdinalIgnoreCase));
                 if (hit != null) return hit;
             }
-            catch { }
+            catch (Exception ex)
+            {
+                SafeLog.Write("DbCfg.GetToolPath.EnumerateTools", ex);
+            }
             return null;
         }
 
@@ -140,7 +145,10 @@ namespace CMPCodeDatabase
                 if (!string.IsNullOrEmpty(candidate) && File.Exists(candidate))
                     return candidate;
             }
-            catch { }
+            catch (Exception ex)
+            {
+                SafeLog.Write("DbCfg.ResolvePatcherPath", ex);
+            }
 
             var def = GetToolPath(defaultExeName);
             return def ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Files", "Tools", defaultExeName);
@@ -162,7 +170,10 @@ namespace CMPCodeDatabase
                         return candidate;
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                SafeLog.Write("DbCfg.ResolvePatcherPathSmart", ex);
+            }
             return null;
         }
     }

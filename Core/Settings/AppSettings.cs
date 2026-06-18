@@ -13,6 +13,7 @@
 using System;
 using System.IO;
 using System.Text.Json;
+using CMPCodeDatabase.Core.Diagnostics;
 
 namespace CMPCodeDatabase.Core.Settings
 {
@@ -62,7 +63,10 @@ namespace CMPCodeDatabase.Core.Settings
                             _instance = JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
                         }
                     }
-                    catch { /* ignore and fallback */ }
+                    catch (Exception ex)
+                    {
+                        SafeLog.Write("AppSettings.Load", ex);
+                    }
                     _instance ??= new AppSettings();
                 }
                 return _instance;
@@ -75,9 +79,29 @@ namespace CMPCodeDatabase.Core.Settings
             {
                 Directory.CreateDirectory(CompanyFolder);
                 var json = JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true });
-                File.WriteAllText(SettingsPath, json);
+                var tempPath = SettingsPath + ".tmp";
+
+                File.WriteAllText(tempPath, json);
+
+                try
+                {
+                    if (File.Exists(SettingsPath))
+                        File.Replace(tempPath, SettingsPath, null, ignoreMetadataErrors: true);
+                    else
+                        File.Move(tempPath, SettingsPath);
+                }
+                catch (Exception ex)
+                {
+                    // Fallback for file systems that do not support File.Replace.
+                    SafeLog.Write("AppSettings.Save.ReplaceFallback", ex);
+                    File.Copy(tempPath, SettingsPath, overwrite: true);
+                    try { File.Delete(tempPath); } catch { /* best effort cleanup */ }
+                }
             }
-            catch { /* ignore */ }
+            catch (Exception ex)
+            {
+                SafeLog.Write("AppSettings.Save", ex);
+            }
         }
     }
 }

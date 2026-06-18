@@ -106,8 +106,9 @@ namespace CMPCodeDatabase.UI.Dialogs
         using var picker = new DatabasePickerDialog();
         if (picker.ShowDialog(this) != DialogResult.OK) return;
 
-        if (picker.SelectedDatabase is null) return;
-        await DatabaseManager.DownloadDatabasesAsync(this, new[] { picker.SelectedDatabase }, promptBeforeDownloading: false);
+        var selected = picker.SelectedDatabases;
+        if (selected.Length == 0) return;
+        await DatabaseManager.DownloadDatabasesAsync(this, selected, promptBeforeDownloading: false);
     });
 
     ctx.Items.Add("Download All Databases", null, async (_, __) =>

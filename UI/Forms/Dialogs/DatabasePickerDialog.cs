@@ -18,6 +18,7 @@ public sealed class DatabasePickerDialog : Form
     private DatabaseManager.ManifestRoot? _manifest;
 
     public DatabaseManager.ManifestDatabase? SelectedDatabase { get; private set; }
+    public DatabaseManager.ManifestDatabase[] SelectedDatabases { get; private set; } = Array.Empty<DatabaseManager.ManifestDatabase>();
 
     public DatabasePickerDialog()
     {
@@ -37,7 +38,8 @@ public sealed class DatabasePickerDialog : Form
             Dock = DockStyle.Fill,
             View = View.Details,
             FullRowSelect = true,
-            HideSelection = false
+            HideSelection = false,
+            MultiSelect = true
         };
         _list.Columns.Add("Database", 360);
         _list.Columns.Add("Files", 80);
@@ -45,7 +47,7 @@ public sealed class DatabasePickerDialog : Form
 
         _lblStatus = new Label { Dock = DockStyle.Fill, AutoSize = true, Text = "Loading manifest…", ForeColor = SystemColors.GrayText };
 
-        _btnOk = new Button { Text = "Download", DialogResult = DialogResult.OK, AutoSize = true };
+        _btnOk = new Button { Text = "Download Selected", DialogResult = DialogResult.OK, AutoSize = true };
         _btnOk.Click += (s, e) => { if (!AcceptSelection()) DialogResult = DialogResult.None; };
 
         _btnCancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, AutoSize = true };
@@ -131,9 +133,22 @@ public sealed class DatabasePickerDialog : Form
 
     private bool AcceptSelection()
     {
-        if (_list.SelectedItems.Count == 0) return false;
+        var selected = _list.SelectedItems
+            .Cast<ListViewItem>()
+            .Select(i => i.Tag as DatabaseManager.ManifestDatabase)
+            .Where(d => d is not null)
+            .Cast<DatabaseManager.ManifestDatabase>()
+            .ToArray();
 
-        SelectedDatabase = _list.SelectedItems[0].Tag as DatabaseManager.ManifestDatabase;
-        return SelectedDatabase is not null;
+        SelectedDatabases = selected;
+        SelectedDatabase = selected.FirstOrDefault();
+
+        if (selected.Length == 0)
+        {
+            MessageBox.Show(this, "Nothing selected.", "CMPCodeDatabase", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return false;
+        }
+
+        return true;
     }
 }
